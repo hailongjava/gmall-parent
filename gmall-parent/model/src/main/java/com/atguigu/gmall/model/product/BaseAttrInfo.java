@@ -35,6 +35,7 @@ public class BaseAttrInfo extends BaseEntity {
 	@TableField("category_level")
 	private Integer categoryLevel;
 
+	//平台属性值集合   不存在   扩展属性  表中没有此字段的  Model与表映射
 	@TableField(exist = false)
 	private List<BaseAttrValue> attrValueList;
 
