@@ -89,6 +89,12 @@ public class ManageServiceImpl implements ManageService {
     private SpuInfoMapper spuInfoMapper;
     @Autowired
     private BaseSaleAttrMapper baseSaleAttrMapper;
+    @Autowired
+    private SpuImageMapper spuImageMapper;
+    @Autowired
+    private SpuSaleAttrMapper spuSaleAttrMapper;
+    @Autowired
+    private SpuSaleAttrValueMapper spuSaleAttrValueMapper;
 
     //根据三级分类的ID  查询商品分页集合
     @Override
@@ -109,5 +115,36 @@ public class ManageServiceImpl implements ManageService {
     @Override
     public List<BaseSaleAttr> baseSaleAttrList() {
         return baseSaleAttrMapper.selectList(null);
+    }
+
+
+    //保存商品信息
+    @Override
+    public void saveSpuInfo(SpuInfo spuInfo) {
+        //1:保存Spu_info 商品信息表
+        spuInfoMapper.insert(spuInfo);
+        //2:保存商品图片表
+        List<SpuImage> spuImageList = spuInfo.getSpuImageList();
+        spuImageList.forEach(image -> {
+            //商品信息表的ID  作为外键
+            image.setSpuId(spuInfo.getId());
+            spuImageMapper.insert(image);
+        });
+        //3:保存商品的销售属性
+        List<SpuSaleAttr> spuSaleAttrList = spuInfo.getSpuSaleAttrList();
+        spuSaleAttrList.forEach(saleAttr -> {
+            //商品信息表的ID  作为外键
+            saleAttr.setSpuId(spuInfo.getId());
+            spuSaleAttrMapper.insert(saleAttr);
+            //4:此商品销售属性对应的N多个属性值
+            List<SpuSaleAttrValue> spuSaleAttrValueList = saleAttr.getSpuSaleAttrValueList();
+            spuSaleAttrValueList.forEach(saleAttrValue -> {
+                //商品信息表的ID  作为外键
+                saleAttrValue.setSpuId(spuInfo.getId());
+                //销售属性的名称
+                saleAttrValue.setSaleAttrName(saleAttr.getSaleAttrName());
+                spuSaleAttrValueMapper.insert(saleAttrValue);
+            });
+        });
     }
 }

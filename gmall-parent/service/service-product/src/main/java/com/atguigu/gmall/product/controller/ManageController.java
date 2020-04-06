@@ -100,6 +100,13 @@ public class ManageController {
         List<BaseSaleAttr> baseSaleAttrList = manageService.baseSaleAttrList();
         return Result.ok(baseSaleAttrList);
     }
+    //保存商品信息 四张表
+    @PostMapping("saveSpuInfo")
+    public Result saveSpuInfo(@RequestBody SpuInfo spuInfo){
+        //保存商品信息
+        manageService.saveSpuInfo(spuInfo);
+        return Result.ok();
+    }
 
 
 }

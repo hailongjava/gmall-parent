@@ -23,4 +23,6 @@ public interface ManageService {
     List<BaseTrademark> getTrademarkList();
 
     List<BaseSaleAttr> baseSaleAttrList();
+
+    void saveSpuInfo(SpuInfo spuInfo);
 }
