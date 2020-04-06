@@ -17,10 +17,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    @ResponseBody
+    @ResponseBody //此注解 直接把返回结果抛到页面上    //去掉此注解 ：可以跳转指定页面
     public Result error(Exception e){
-        e.printStackTrace();
-        return Result.fail();
+        e.printStackTrace();//打印在控制台
+        return Result.fail(); //将异常返回到页面上  抛异常到页面
+        //企业做法： 跳转错误页面   服务器太忙  美工前端 美丽页面 提示
     }
 
     /**

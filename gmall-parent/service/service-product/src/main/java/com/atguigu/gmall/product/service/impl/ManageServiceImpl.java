@@ -4,6 +4,8 @@ import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -26,6 +28,8 @@ public class ManageServiceImpl implements ManageService {
     private BaseAttrInfoMapper baseAttrInfoMapper;
     @Autowired
     private BaseAttrValueMapper baseAttrValueMapper;
+    @Autowired
+    private BaseTrademarkMapper baseTrademarkMapper;
     //获取一级分类
     @Override
     public List<BaseCategory1> getCategory1() {
@@ -67,5 +71,43 @@ public class ManageServiceImpl implements ManageService {
             });
         }
 
+    }
+
+    //查询品牌集合 分页查询
+    @Override
+    public IPage<BaseTrademark> baseTrademark(Integer page, Integer limit) {
+        //Mybaits-Plus
+
+        //1:分页对象
+        IPage<BaseTrademark> p = new Page(page,limit);
+        IPage<BaseTrademark> baseTrademarkIPage = baseTrademarkMapper.selectPage(p, null);
+        return baseTrademarkIPage;
+    }
+
+
+    @Autowired
+    private SpuInfoMapper spuInfoMapper;
+    @Autowired
+    private BaseSaleAttrMapper baseSaleAttrMapper;
+
+    //根据三级分类的ID  查询商品分页集合
+    @Override
+    public IPage<SpuInfo> spuPage(Integer page, Integer limit, Long category3Id) {
+        //分页对象
+        IPage<SpuInfo> p = new Page(page,limit);
+        IPage<SpuInfo> spuInfoIPage = spuInfoMapper.
+                selectPage(p, new QueryWrapper<SpuInfo>().eq("category3_id", category3Id));
+        return spuInfoIPage;
+    }
+    //查询所有品牌的集合
+    @Override
+    public List<BaseTrademark> getTrademarkList() {
+        return baseTrademarkMapper.selectList(null);
+    }
+
+    //查询所有销售属性
+    @Override
+    public List<BaseSaleAttr> baseSaleAttrList() {
+        return baseSaleAttrMapper.selectList(null);
     }
 }

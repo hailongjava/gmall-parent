@@ -1,11 +1,9 @@
 package com.atguigu.gmall.product.controller;
 
 import com.atguigu.gmall.common.result.Result;
-import com.atguigu.gmall.model.product.BaseAttrInfo;
-import com.atguigu.gmall.model.product.BaseCategory1;
-import com.atguigu.gmall.model.product.BaseCategory2;
-import com.atguigu.gmall.model.product.BaseCategory3;
+import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.service.ManageService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,4 +64,42 @@ public class ManageController {
         manageService.saveAttrInfo(baseAttrInfo);
         return Result.ok();
     }
+    //查询品牌列表  分页查询
+    @ApiOperation("查询品牌列表分页查询")
+    @GetMapping("/baseTrademark/{page}/{limit}")
+    public Result baseTrademark(@PathVariable(name = "page") Integer page,
+                                @PathVariable(name = "limit") Integer limit){
+        //查询品牌集合
+        IPage<BaseTrademark> baseTrademarkPage =  manageService.baseTrademark(page,limit);
+        //成功  一旦失败 抛异常  SpringMVC  全局异常处理器  SpringMVC  前端控制器  处理器映射器 处理器适配器 视图解析器
+        return Result.ok(baseTrademarkPage);
+    }
+    //根据三级分类的ID  查询商品分页集合
+    //@ApiOperation("根据三级分类的ID  查询商品分页集合")
+    @GetMapping("/{page}/{limit}")
+    public Result spuPage(
+            @PathVariable(name = "page") Integer page,
+            @PathVariable(name = "limit") Integer limit,
+            Long category3Id
+    ){
+
+        //查询
+        IPage<SpuInfo> spuInfoIPage =  manageService.spuPage(page,limit,category3Id);
+
+        return Result.ok(spuInfoIPage);
+    }
+    //查询所有品牌的集合
+    @GetMapping("/baseTrademark/getTrademarkList")
+    public Result getTrademarkList(){
+        List<BaseTrademark> baseTrademarkList = manageService.getTrademarkList();
+        return Result.ok(baseTrademarkList);
+    }
+    //查询所有平台属性集合
+    @GetMapping("baseSaleAttrList")
+    public Result baseSaleAttrList(){
+        List<BaseSaleAttr> baseSaleAttrList = manageService.baseSaleAttrList();
+        return Result.ok(baseSaleAttrList);
+    }
+
+
 }
