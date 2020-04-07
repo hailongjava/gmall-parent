@@ -198,6 +198,35 @@ public class ManageServiceImpl implements ManageService {
         return skuInfoMapper.selectPage(new Page<SkuInfo>(page,limit),null);
     }
 
+    //上架
+    @Override
+    public void onSale(Long skuId) {
+        //1:更新 库存 上架状态
+        SkuInfo skuInfo = new SkuInfo();
+        skuInfo.setId(skuId);
+        skuInfo.setIsSale(1);
+        skuInfoMapper.updateById(skuInfo);
+        //2:保存索引
+        //TODO
+
+    }
+
+    //下架
+    @Override
+    public void cancelSale(Long skuId) {
+        SkuInfo skuInfo = new SkuInfo();
+        skuInfo.setId(skuId);
+        skuInfo.setIsSale(0);
+        skuInfoMapper.updateById(skuInfo);
+        //2:删除索引
+        //TODO
+    }
+    //根据skuId 查询库存表
+    @Override
+    public SkuInfo getSkuInfo(Long skuId) {
+        return skuInfoMapper.selectById(skuId);
+    }
+
     @Autowired
     private SkuInfoMapper skuInfoMapper;
     @Autowired

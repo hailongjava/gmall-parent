@@ -134,5 +134,19 @@ public class ManageController {
         IPage<SkuInfo> skuInfoIPage = manageService.skuList(page,limit);
         return Result.ok(skuInfoIPage);
     }
+    //上架
+    @GetMapping("/onSale/{skuId}")
+    public Result onSale(@PathVariable(name = "skuId") Long skuId){
+        //上架
+        manageService.onSale(skuId);
+        return Result.ok();
 
+    }
+    //下架
+    @GetMapping("/cancelSale/{skuId}")
+    public Result cancelSale(@PathVariable(name = "skuId") Long skuId){
+        //下架
+        manageService.cancelSale(skuId);
+        return Result.ok();
+    }
 }

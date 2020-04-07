@@ -33,4 +33,10 @@ public interface ManageService {
     void saveSkuInfo(SkuInfo skuInfo);
 
     IPage<SkuInfo> skuList(Integer page, Integer limit);
+
+    void onSale(Long skuId);
+
+    void cancelSale(Long skuId);
+
+    SkuInfo getSkuInfo(Long skuId);
 }
