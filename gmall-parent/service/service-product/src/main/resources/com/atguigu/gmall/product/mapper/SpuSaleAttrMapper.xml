@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.atguigu.gmall.product.mapper.SpuSaleAttrMapper">
+
+<!--    //根据spuId  查询销售属性及嵌套的属性值集合-->
+<!--    List<SpuSaleAttr> spuSaleAttrList(Long spuId);-->
+    <resultMap id="spuSaleAttrListMap" type="SpuSaleAttr">
+        <id column="id" property="id"/>
+        <!-- 嵌套的属性值集合 -->
+        <collection property="spuSaleAttrValueList" ofType="SpuSaleAttrValue">
+            <id column="vId" property="id"/>
+        </collection>
+    </resultMap>
+    <select id="spuSaleAttrList" resultMap="spuSaleAttrListMap">
+        select
+            ssa.id,
+            ssa.base_sale_attr_id,
+            ssa.sale_attr_name,
+            ssav.id vId,
+            ssav.sale_attr_value_name
+        from spu_sale_attr ssa
+        inner join spu_sale_attr_value ssav
+        on ssa.spu_id = ssav.spu_id and ssa.base_sale_attr_id = ssav.base_sale_attr_id
+        where ssa.spu_id = #{spuId}
+    </select>
+
+</mapper>

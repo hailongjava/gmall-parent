@@ -107,6 +107,32 @@ public class ManageController {
         manageService.saveSpuInfo(spuInfo);
         return Result.ok();
     }
+    //根据spuId 查询图片列表
+    @GetMapping("/spuImageList/{spuId}")
+    public Result spuImageList(@PathVariable(name = "spuId") Long spuId){
+        //图片集合
+        List<SpuImage> spuImageList = manageService.spuImageList(spuId);
+        return Result.ok(spuImageList);
+    }
+    //根据spuId  查询销售属性及嵌套的属性值集合
+    @GetMapping("/spuSaleAttrList/{spuId}")
+    public Result spuSaleAttrList(@PathVariable(name = "spuId") Long spuId){
+        List<SpuSaleAttr> spuSaleAttrList = manageService.spuSaleAttrList(spuId);
+        return Result.ok(spuSaleAttrList);
+    }
 
+    //保存Sku 四张表
+    @PostMapping("/saveSkuInfo")
+    public Result saveSkuInfo(@RequestBody SkuInfo skuInfo){
+        //保存
+        manageService.saveSkuInfo(skuInfo);
+        return Result.ok();
+    }
+    //查询Sku分页列表
+    @GetMapping("/list/{page}/{limit}")
+    public Result skuList(@PathVariable(name = "page") Integer page,@PathVariable(name = "limit") Integer limit){
+        IPage<SkuInfo> skuInfoIPage = manageService.skuList(page,limit);
+        return Result.ok(skuInfoIPage);
+    }
 
 }

@@ -147,4 +147,63 @@ public class ManageServiceImpl implements ManageService {
             });
         });
     }
+    //根据spuId 查询图片列表
+    @Override
+    public List<SpuImage> spuImageList(Long spuId) {
+        return spuImageMapper.selectList(new QueryWrapper<SpuImage>().eq("spu_id",spuId));
+    }
+
+
+    //根据spuId  查询销售属性及嵌套的属性值集合
+    @Override
+    public List<SpuSaleAttr> spuSaleAttrList(Long spuId) {
+        //现在需要关联查询
+        return spuSaleAttrMapper.spuSaleAttrList(spuId);
+    }
+
+    //保存Sku
+    @Override
+    public void saveSkuInfo(SkuInfo skuInfo) {
+        //默认是不卖
+        skuInfo.setIsSale(0);
+        //1:sku_info
+        skuInfoMapper.insert(skuInfo);
+        //2:sku_image
+        List<SkuImage> skuImageList = skuInfo.getSkuImageList();
+        skuImageList.forEach(image -> {
+            //外键
+            image.setSkuId(skuInfo.getId());
+            skuImageMapper.insert(image);
+        });
+        //3:销售属性 sku_sale_attr_value
+        List<SkuSaleAttrValue> skuSaleAttrValueList = skuInfo.getSkuSaleAttrValueList();
+        skuSaleAttrValueList.forEach(skuSaleAttrValue -> {
+            //外键  sku_id
+            skuSaleAttrValue.setSkuId(skuInfo.getId());
+            //外键  spu_id
+            skuSaleAttrValue.setSpuId(skuInfo.getSpuId());
+            skuSaleAttrValueMapper.insert(skuSaleAttrValue);
+        });
+        //4:平台属性 sku_attr_value
+        List<SkuAttrValue> skuAttrValueList = skuInfo.getSkuAttrValueList();
+        skuAttrValueList.forEach(skuAttrValue -> {
+            //外键
+            skuAttrValue.setSkuId(skuInfo.getId());
+            skuAttrValueMapper.insert(skuAttrValue);
+        });
+    }
+    //查询Sku分页列表
+    @Override
+    public IPage<SkuInfo> skuList(Integer page, Integer limit) {
+        return skuInfoMapper.selectPage(new Page<SkuInfo>(page,limit),null);
+    }
+
+    @Autowired
+    private SkuInfoMapper skuInfoMapper;
+    @Autowired
+    private SkuImageMapper skuImageMapper;
+    @Autowired
+    private SkuAttrValueMapper skuAttrValueMapper;
+    @Autowired
+    private SkuSaleAttrValueMapper skuSaleAttrValueMapper;
 }
