@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  *  对外暴露的接口 降级后处理实现类如下
@@ -34,6 +35,11 @@ public class ProductDegradeFeignClient implements ProductFeignClient {
 
     @Override
     public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
+        return null;
+    }
+
+    @Override
+    public Map getSkuValueIdsMap(Long spuId) {
         return null;
     }
 }

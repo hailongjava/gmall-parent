@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 商品微服务对外暴露的接口
@@ -35,4 +36,11 @@ public interface ProductFeignClient {
     @GetMapping("/api/product/inner/getSpuSaleAttrListCheckBySku/{skuId}/{spuId}")
     public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(@PathVariable(name = "skuId") Long skuId,
                                                           @PathVariable(name = "spuId") Long spuId);
+
+
+    //查询组合对应库存ID
+    // {颜色|版本|套装 : skuId,颜色|版本|套装 : skuId,颜色|版本|套装 : skuId,颜色|版本|套装 : skuId}
+    @ApiOperation("查询组合对应库存ID ")
+    @GetMapping("/api/product/inner/getSkuValueIdsMap/{spuId}")
+    public Map getSkuValueIdsMap(@PathVariable(name = "spuId") Long spuId);
 }

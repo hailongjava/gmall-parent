@@ -1,5 +1,6 @@
 package com.atguigu.gmall.item.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.item.service.ItemService;
 import com.atguigu.gmall.model.product.BaseCategoryView;
 import com.atguigu.gmall.model.product.SkuInfo;
@@ -41,6 +42,9 @@ public class ItemServiceImpl implements ItemService {
         List<SpuSaleAttr> spuSaleAttrListCheckBySku = productFeignClient.
                 getSpuSaleAttrListCheckBySku(skuInfo.getId(), skuInfo.getSpuId());
         result.put("spuSaleAttrList",spuSaleAttrListCheckBySku);
+        //5:查询组合数据对应库存ID
+        Map map = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
+        result.put("valuesSkuJson", JSON.toJSONString(map));
         return result;
     }
 }

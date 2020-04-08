@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 后台管理 业务层
@@ -258,6 +260,19 @@ public class ManageServiceImpl implements ManageService {
     public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
 
         return spuSaleAttrMapper.getSpuSaleAttrListCheckBySku(skuId,spuId);
+    }
+
+    //查询组合对应库存ID
+    // {颜色|版本|套装 : skuId,颜色|版本|套装 : skuId,颜色|版本|套装 : skuId,颜色|版本|套装 : skuId}
+    @Override
+    public Map getSkuValueIdsMap(Long spuId) {
+        Map result = new HashMap();
+        List<Map> skuValueIdsMap = skuSaleAttrValueMapper.getSkuValueIdsMap(spuId);
+        //Map1  K:values_id V:1|13|11   K：sku_id V:10
+        skuValueIdsMap.forEach(map -> {
+            result.put(map.get("values_id"),map.get("sku_id"));
+        });
+        return result;
     }
 
     @Autowired

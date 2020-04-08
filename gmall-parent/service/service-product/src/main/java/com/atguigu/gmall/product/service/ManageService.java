@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public interface ManageService {
     List<BaseCategory1> getCategory1();
@@ -46,4 +47,6 @@ public interface ManageService {
     BigDecimal getPrice(Long skuId);
 
     List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId);
+
+    Map getSkuValueIdsMap(Long spuId);
 }

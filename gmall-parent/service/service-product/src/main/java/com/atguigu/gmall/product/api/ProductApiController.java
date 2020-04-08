@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  *  对外暴露的接口 （对接的入口）  前台 商品详情页面  搜索页面  首页 ...
@@ -63,6 +64,14 @@ public class ProductApiController {
                                                           @PathVariable(name = "spuId") Long spuId){
 
         return manageService.getSpuSaleAttrListCheckBySku(skuId,spuId);
+    }
+    //查询组合对应库存ID
+    // {颜色|版本|套装 : skuId,颜色|版本|套装 : skuId,颜色|版本|套装 : skuId,颜色|版本|套装 : skuId}
+    @ApiOperation("查询组合对应库存ID ")
+    @GetMapping("/inner/getSkuValueIdsMap/{spuId}")
+    public Map getSkuValueIdsMap(@PathVariable(name = "spuId") Long spuId){
+
+        return manageService.getSkuValueIdsMap(spuId);
     }
 
 
