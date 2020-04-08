@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -224,9 +225,43 @@ public class ManageServiceImpl implements ManageService {
     //根据skuId 查询库存表
     @Override
     public SkuInfo getSkuInfo(Long skuId) {
-        return skuInfoMapper.selectById(skuId);
+        //1:根据SKUID查询库存表
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        //2:根据SKUID查询库存图片表
+        List<SkuImage> skuImageList = skuImageMapper.
+                selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
+        skuInfo.setSkuImageList(skuImageList);
+        return skuInfo;
     }
 
+
+    //根据三级分类的ID 查询一二三级分类的ID、名称
+    @Override
+    public BaseCategoryView getBaseCategoryView(Long category3Id) {
+        return baseCategoryViewMapper.selectById(category3Id);
+    }
+
+    //单独查询价格
+    @Override
+    public BigDecimal getPrice(Long skuId) {
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        if(null != skuInfo){
+            //防止NULL指针异常
+            return skuInfo.getPrice();
+        }
+        return null;
+    }
+
+    //-- 根据商品ID查询销售属性及销售属性值集合
+    //-- 并且根据当前skuId库存ID查询出对应的销售属性值
+    @Override
+    public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
+
+        return spuSaleAttrMapper.getSpuSaleAttrListCheckBySku(skuId,spuId);
+    }
+
+    @Autowired
+    private BaseCategoryViewMapper baseCategoryViewMapper;
     @Autowired
     private SkuInfoMapper skuInfoMapper;
     @Autowired

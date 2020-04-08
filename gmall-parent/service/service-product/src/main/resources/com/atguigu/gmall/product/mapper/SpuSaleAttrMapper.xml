@@ -2,8 +2,8 @@
 <!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.atguigu.gmall.product.mapper.SpuSaleAttrMapper">
 
-<!--    //根据spuId  查询销售属性及嵌套的属性值集合-->
-<!--    List<SpuSaleAttr> spuSaleAttrList(Long spuId);-->
+    <!--    //根据spuId  查询销售属性及嵌套的属性值集合-->
+    <!--    List<SpuSaleAttr> spuSaleAttrList(Long spuId);-->
     <resultMap id="spuSaleAttrListMap" type="SpuSaleAttr">
         <id column="id" property="id"/>
         <!-- 嵌套的属性值集合 -->
@@ -24,4 +24,32 @@
         where ssa.spu_id = #{spuId}
     </select>
 
+
+    <!--    //&#45;&#45; 根据商品ID查询销售属性及销售属性值集合-->
+    <!--    //&#45;&#45; 并且根据当前skuId库存ID查询出对应的销售属性值-->
+    <!--    List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(@Param("skuId") Long skuId, @Param("spuId") Long spuId);-->
+    <resultMap id="getSpuSaleAttrListCheckBySkuMap" type="SpuSaleAttr">
+        <id column="id" property="id"/>
+        <!-- 1对多 映射 属性值集合 -->
+        <collection property="spuSaleAttrValueList" ofType="SpuSaleAttrValue">
+            <id column="sale_attr_value_id" property="id"/>
+            <result column="is_checked" property="isChecked"/>
+        </collection>
+    </resultMap>
+    <select id="getSpuSaleAttrListCheckBySku" resultMap="getSpuSaleAttrListCheckBySkuMap">
+            SELECT
+                sa.id ,
+                sa.spu_id,
+                sa.sale_attr_name,
+                sa.base_sale_attr_id,
+                sv.id sale_attr_value_id,
+                sv.sale_attr_value_name,
+                skv.sku_id,
+                IF(skv.sku_id IS NULL,0,1)  is_checked
+            FROM spu_sale_attr sa
+            INNER JOIN spu_sale_attr_value  sv ON  sa.spu_id=sv.spu_id AND sa.base_sale_attr_id=sv.base_sale_attr_id
+            LEFT JOIN sku_sale_attr_value skv ON skv.sale_attr_value_id= sv.id AND skv.sku_id=#{skuId}
+            WHERE  sa.spu_id=#{spuId}
+            ORDER BY sv.base_sale_attr_id,sv.id
+    </select>
 </mapper>
