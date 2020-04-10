@@ -23,6 +23,24 @@ public class TestController {
         testService.testLock();
         return Result.ok();
     }
+    //测试分布式锁
+    @GetMapping("testRedisLock")
+    public Result testRedisLock(){
+        testService.testRedisLock();
+        return Result.ok();
+    }
 
+    //测试读锁
+    @GetMapping("/testReadLock")
+    public Result testReadLock(){
+        String msg = testService.testReadLock();
+        return Result.ok(msg);
+    }
+    //测试写锁
+    @GetMapping("/testWriteLock")
+    public Result testWriteLock(){
+        testService.testWriteLock();
+        return Result.ok();
+    }
 
 }

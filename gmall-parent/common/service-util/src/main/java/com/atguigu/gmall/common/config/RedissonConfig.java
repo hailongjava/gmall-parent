@@ -5,6 +5,7 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.redisson.config.SingleServerConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ public class RedissonConfig {
     private int timeout = 3000;
     private static String ADDRESS_PREFIX = "redis://";
 
+
     /**
      * 自动装配
      *
@@ -42,6 +44,11 @@ public class RedissonConfig {
         SingleServerConfig serverConfig = config.useSingleServer()
                 .setAddress(ADDRESS_PREFIX + this.host + ":" + port)
                 .setTimeout(this.timeout);
+//        config.useClusterServers().addNodeAddress("redis://127.0.0.1:7181",
+//                "redis://127.0.0.1:7181",
+//                "redis://127.0.0.1:7181",
+//                "redis://127.0.0.1:7181",
+//                "redis://127.0.0.1:7181")
         if(!StringUtils.isEmpty(this.password)) {
             serverConfig.setPassword(this.password);
         }

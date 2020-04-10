@@ -245,31 +245,32 @@ public class ManageServiceImpl implements ManageService {
             //2:有 直接返回
             return skuInfo;
         }
+
         System.out.println("缓存中没有数据");
         //3:没有 再去Mysql数据库中查询
         //1)根据SKUID查询库存表
-        skuInfo = skuInfoMapper.selectById(skuId);
+        SkuInfo skuInfo1 = skuInfoMapper.selectById(skuId);
         //判断获取Mysql数据中SkuInfo是否为NULL  为NULL表示人为攻击 返回空结果
-        if(null == skuInfo){
-            skuInfo = new SkuInfo();
+        if(null == skuInfo1){
+            skuInfo1 = new SkuInfo();
             System.out.println("有人攻击我们网站：skuId不存在：返回空结果");
-            redisTemplate.opsForValue().set(key,skuInfo,5, TimeUnit.MINUTES);//过期时间为5分钟
+            redisTemplate.opsForValue().set(key,skuInfo1,5, TimeUnit.MINUTES);//过期时间为5分钟
             return skuInfo;
         }
         //2)根据SKUID查询库存图片表
         List<SkuImage> skuImageList = skuImageMapper.
                 selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
-        skuInfo.setSkuImageList(skuImageList);
+        skuInfo1.setSkuImageList(skuImageList);
         System.out.println("缓存中再次保存了一份数据：" + JSON.toJSONString(skuInfo));
 
         //随机数
         Random random = new Random();
         int i = random.nextInt(300);
         //4:再保存缓存一份
-        redisTemplate.opsForValue().set(key,skuInfo,
+        redisTemplate.opsForValue().set(key,skuInfo1,
                 RedisConst.SKUKEY_TIMEOUT + i,TimeUnit.SECONDS);//key:String类型 V：任何类型 底层转成JSon格式字符串
         //5:返回
-        return skuInfo;
+        return skuInfo1;
     }
 
 

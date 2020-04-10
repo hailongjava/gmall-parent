@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.sql.SQLOutput;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ public class ProductApiController {
     @ApiOperation("根据skuId查询库存表")
     @GetMapping("/inner/getSkuInfo/{skuId}")
     public SkuInfo getSkuInfo(@PathVariable(name = "skuId") Long skuId){
+        System.out.println("根据skuId查询库存表");
         return manageService.getSkuInfo(skuId);
     }
 
