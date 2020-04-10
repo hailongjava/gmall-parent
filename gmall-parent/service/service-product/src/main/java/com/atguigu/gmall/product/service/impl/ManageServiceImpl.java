@@ -1,5 +1,7 @@
 package com.atguigu.gmall.product.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.atguigu.gmall.common.constant.RedisConst;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
@@ -7,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -14,6 +17,8 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 后台管理 业务层
@@ -224,15 +229,46 @@ public class ManageServiceImpl implements ManageService {
         //2:删除索引
         //TODO
     }
+
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     //根据skuId 查询库存表
     @Override
     public SkuInfo getSkuInfo(Long skuId) {
-        //1:根据SKUID查询库存表
-        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
-        //2:根据SKUID查询库存图片表
+        //1:先去Redis缓存中获取   五大数据类型 ： 常用 String类型  Hash类型  偶尔使用List
+        String key = RedisConst.SKUKEY_PREFIX + skuId + RedisConst.SKUKEY_SUFFIX;
+        SkuInfo skuInfo = (SkuInfo) redisTemplate.opsForValue().get(key);
+        if(null != skuInfo){
+            System.out.println("缓存中已经有数据了：" + JSON.toJSONString(skuInfo));
+            //2:有 直接返回
+            return skuInfo;
+        }
+        System.out.println("缓存中没有数据");
+        //3:没有 再去Mysql数据库中查询
+        //1)根据SKUID查询库存表
+        skuInfo = skuInfoMapper.selectById(skuId);
+        //判断获取Mysql数据中SkuInfo是否为NULL  为NULL表示人为攻击 返回空结果
+        if(null == skuInfo){
+            skuInfo = new SkuInfo();
+            System.out.println("有人攻击我们网站：skuId不存在：返回空结果");
+            redisTemplate.opsForValue().set(key,skuInfo,5, TimeUnit.MINUTES);//过期时间为5分钟
+            return skuInfo;
+        }
+        //2)根据SKUID查询库存图片表
         List<SkuImage> skuImageList = skuImageMapper.
                 selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
         skuInfo.setSkuImageList(skuImageList);
+        System.out.println("缓存中再次保存了一份数据：" + JSON.toJSONString(skuInfo));
+
+        //随机数
+        Random random = new Random();
+        int i = random.nextInt(300);
+        //4:再保存缓存一份
+        redisTemplate.opsForValue().set(key,skuInfo,
+                RedisConst.SKUKEY_TIMEOUT + i,TimeUnit.SECONDS);//key:String类型 V：任何类型 底层转成JSon格式字符串
+        //5:返回
         return skuInfo;
     }
 

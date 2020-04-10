@@ -45,20 +45,34 @@ public class RedisConfig {
         };
     }
 
+    // 对SpringDataRedis进行配置  RedisTemplate 对象 进行缓存操作
+    // 使用RedisTemplate  注意事项： K：字符串 V：无所谓 （底层是一定时将你输入的任何类型对象转成Json格式字符串）
     @Bean
     public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
+        // RedisTemplate 操作五大数据类型 ：
+
+
+
         Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+        // @RequestBody  @ResponseBody 的底层实现
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
         jackson2JsonRedisSerializer.setObjectMapper(objectMapper);
 
+
         //序列号key value
+        //1:值类型 String 类型    K：要求必须是String   V:字符串类型
+        // 后果：保存到Redis缓存中的数据Key是乱码
         redisTemplate.setKeySerializer(new StringRedisSerializer());
+        // V：POJO类型、List集合类型、Map类型、转成Json格式的字符串类型
         redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
+
+        //2：Hash类型 散列类型  二个Key   Map oneKey = new HashMap  oneKey.put(twoKey,V)
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        //Hash类型   V:POJO类型、List集合类型、Map类型、转成Json格式的字符串类型
         redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);
 
         redisTemplate.afterPropertiesSet();
