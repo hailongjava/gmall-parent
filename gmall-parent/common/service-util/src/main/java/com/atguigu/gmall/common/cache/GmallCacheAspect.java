@@ -1,5 +1,6 @@
 package com.atguigu.gmall.common.cache;
 
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.constant.RedisConst;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -61,10 +62,15 @@ public class GmallCacheAspect {
                 Object proceed = pjp.proceed(args);
                 //穿透
                 if(null == proceed){
-                    proceed = new Object();
-                    redisTemplate.opsForValue().set(key,proceed,5,TimeUnit.SECONDS);
-                    return proceed;
+                    Object o1 = new Object();
+                    //Object 必须实现序列化接口 转成Json格式字符串
+                    //Object 入参是对象转Json格式字符串  入参直接就是Json格式字符串呢？
+                    //Object 类型由自己完成Json的转换   结果Json格式字符串
+                    String json = JSONObject.toJSONString(o1);
+                    redisTemplate.opsForValue().set(key,json,5,TimeUnit.MINUTES);
+                    return o1;
                 }else{
+                    //String json = JSONObject.toJSONString(proceed);
                     redisTemplate.opsForValue().set(key,proceed,RedisConst.SKUKEY_TIMEOUT,TimeUnit.SECONDS);
                     return proceed;
                 }

@@ -47,7 +47,6 @@ public class ProductApiController {
     @ApiOperation("根据三级分类的ID 查询一二三级分类的ID、名称")
     @GetMapping("/getBaseCategoryView/{category3Id}")
     public BaseCategoryView getBaseCategoryView(@PathVariable(name = "category3Id") Long category3Id){
-
         return manageService.getBaseCategoryView(category3Id);
     }
     //单独查询价格
