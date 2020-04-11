@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +46,7 @@ public class TestServiceImpl implements TestService {
         //1:上锁   命令：setnx   Java代码 setIfAbsent
         // 命令：setnx 返回值 1   Java代码 1转成true    返回值0 java代码 0转成false
         Boolean lock = redisTemplate.opsForValue().setIfAbsent("lock", uuid,
-                10, TimeUnit.SECONDS);//自动解锁
+                100, TimeUnit.SECONDS);//自动解锁
         if(lock){
             //获取到锁
             //2: num 追加
@@ -55,8 +57,10 @@ public class TestServiceImpl implements TestService {
             }
             //3:解锁 具备原子性操作
             //LUA脚本  LUA 由C语言 写的脚本  Nginx上运行可以Redis上运行 Nginx与Redis都C语言写的
-            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-            this.redisTemplate.execute(new DefaultRedisScript<>(script), Arrays.asList("lock"), uuid);
+            //String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return tostring(redis.call('del',KEYS[1])) else return 0 end";
+            this.redisTemplate.execute(new DefaultRedisScript<>(script), Collections.singletonList("lock"), uuid);
+
 //            //1)获取此锁的值 判断是否是自己的锁
 //            String code = (String) redisTemplate.opsForValue().get("lock");
 //            if(!StringUtils.isEmpty(code) && uuid.equals(code)){
