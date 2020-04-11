@@ -1,6 +1,7 @@
 package com.atguigu.gmall.product.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.atguigu.gmall.common.cache.GmallCache;
 import com.atguigu.gmall.common.constant.RedisConst;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
@@ -8,9 +9,12 @@ import com.atguigu.gmall.product.service.ManageService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -38,32 +42,37 @@ public class ManageServiceImpl implements ManageService {
     private BaseAttrValueMapper baseAttrValueMapper;
     @Autowired
     private BaseTrademarkMapper baseTrademarkMapper;
+
     //获取一级分类
     @Override
     public List<BaseCategory1> getCategory1() {
         //查询所有一级分类
         return baseCategory1Mapper.selectList(null);
     }
+
     //根据一级分类的ID 获取二级分类的集合
     @Override
     public List<BaseCategory2> getCategory2(Long category1Id) {
         return baseCategory2Mapper.selectList(
-                new QueryWrapper<BaseCategory2>().eq("category1_id",category1Id));
+                new QueryWrapper<BaseCategory2>().eq("category1_id", category1Id));
     }
+
     //根据二级分类的ID 获取三级分类的集合
     @Override
     public List<BaseCategory3> getCategory3(Long category2Id) {
         return baseCategory3Mapper.selectList(
-                new QueryWrapper<BaseCategory3>().eq("category2_id",category2Id));
+                new QueryWrapper<BaseCategory3>().eq("category2_id", category2Id));
     }
+
     //根据一二三级分类的ID 查询平台属性（属性值集合）
     @Override
     public List<BaseAttrInfo> attrInfoList(Long category1Id, Long category2Id, Long category3Id) {
         // select * from base_attr_info inner join base_attr_value on ... where () or () or ()
         //Mybatis Plus  支持单表操作
         //解决办法 ： Mapper接口  Mapper.xml
-        return baseAttrInfoMapper.attrInfoList(category1Id,category2Id,category3Id);
+        return baseAttrInfoMapper.attrInfoList(category1Id, category2Id, category3Id);
     }
+
     //保存平台属性及属性值
     @Override
     public void saveAttrInfo(BaseAttrInfo baseAttrInfo) {
@@ -71,7 +80,7 @@ public class ManageServiceImpl implements ManageService {
         baseAttrInfoMapper.insert(baseAttrInfo);
         //2:保存平台属性值表 多
         List<BaseAttrValue> attrValueList = baseAttrInfo.getAttrValueList();
-        if(!CollectionUtils.isEmpty(attrValueList)){
+        if (!CollectionUtils.isEmpty(attrValueList)) {
             attrValueList.forEach(attrValue -> {
                 //平台属性表的ID 作为外键
                 attrValue.setAttrId(baseAttrInfo.getId());
@@ -87,7 +96,7 @@ public class ManageServiceImpl implements ManageService {
         //Mybaits-Plus
 
         //1:分页对象
-        IPage<BaseTrademark> p = new Page(page,limit);
+        IPage<BaseTrademark> p = new Page(page, limit);
         IPage<BaseTrademark> baseTrademarkIPage = baseTrademarkMapper.selectPage(p, null);
         return baseTrademarkIPage;
     }
@@ -108,11 +117,12 @@ public class ManageServiceImpl implements ManageService {
     @Override
     public IPage<SpuInfo> spuPage(Integer page, Integer limit, Long category3Id) {
         //分页对象
-        IPage<SpuInfo> p = new Page(page,limit);
+        IPage<SpuInfo> p = new Page(page, limit);
         IPage<SpuInfo> spuInfoIPage = spuInfoMapper.
                 selectPage(p, new QueryWrapper<SpuInfo>().eq("category3_id", category3Id));
         return spuInfoIPage;
     }
+
     //查询所有品牌的集合
     @Override
     public List<BaseTrademark> getTrademarkList() {
@@ -155,10 +165,11 @@ public class ManageServiceImpl implements ManageService {
             });
         });
     }
+
     //根据spuId 查询图片列表
     @Override
     public List<SpuImage> spuImageList(Long spuId) {
-        return spuImageMapper.selectList(new QueryWrapper<SpuImage>().eq("spu_id",spuId));
+        return spuImageMapper.selectList(new QueryWrapper<SpuImage>().eq("spu_id", spuId));
     }
 
 
@@ -200,10 +211,11 @@ public class ManageServiceImpl implements ManageService {
             skuAttrValueMapper.insert(skuAttrValue);
         });
     }
+
     //查询Sku分页列表
     @Override
     public IPage<SkuInfo> skuList(Integer page, Integer limit) {
-        return skuInfoMapper.selectPage(new Page<SkuInfo>(page,limit),null);
+        return skuInfoMapper.selectPage(new Page<SkuInfo>(page, limit), null);
     }
 
     //上架
@@ -233,49 +245,117 @@ public class ManageServiceImpl implements ManageService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private RedissonClient redissonClient;
 
-    //根据skuId 查询库存表
+    //根据skuId 查询库存表  使用Redisson进行上锁  防止缓存三大问题 都要解决
     @Override
     public SkuInfo getSkuInfo(Long skuId) {
-        //1:先去Redis缓存中获取   五大数据类型 ： 常用 String类型  Hash类型  偶尔使用List
+        //库存表保存在缓存中的Key的组成结构
         String key = RedisConst.SKUKEY_PREFIX + skuId + RedisConst.SKUKEY_SUFFIX;
+        //1:从缓存中获取SkuInfo信息
         SkuInfo skuInfo = (SkuInfo) redisTemplate.opsForValue().get(key);
-        if(null != skuInfo){
-            System.out.println("缓存中已经有数据了：" + JSON.toJSONString(skuInfo));
-            //2:有 直接返回
+        if (null != skuInfo) {
+            //2:有
             return skuInfo;
         }
+        //上锁    缓存三大问题之一缓存击穿 百万请求只允许派一个代表来查询Mysql数据 其它不让进
+        RLock lock = redissonClient.getLock(key + ":lock");
+        try {
+            boolean tryLock = lock.tryLock(1, 10, TimeUnit.SECONDS);//  在10秒内未获取锁 证明：在我之前此锁已经被别人获取到了  别人就代表
+            if (tryLock) {
+                //我是代表：我是第一人 拿到锁了
+                skuInfo = skuInfoMapper.selectById(skuId);
+                //缓存三大问题之一的穿透
+                if (null == skuInfo) {
+                    //空结果
+                    skuInfo = new SkuInfo();
+                    redisTemplate.opsForValue().set(key, skuInfo, 5, TimeUnit.MINUTES);
+                    return skuInfo;
+                } else {
+                    //查询Sku图片
+                    List<SkuImage> skuImageList = skuImageMapper.
+                            selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
+                    skuInfo.setSkuImageList(skuImageList);
+                    //缓存三大问题之雪崩
+//                    Random r = new Random();
+//                    r.
+                    redisTemplate.opsForValue().set(key, skuInfo, RedisConst.SKUKEY_TIMEOUT, TimeUnit.SECONDS);
+                    return skuInfo;
+                }
+            } else {
+                //我不是第一人 也不是代表
+                Thread.sleep(2000);
+                return (SkuInfo) redisTemplate.opsForValue().get(key);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //解锁
+            if (lock.isLocked()) {
+                lock.unlock();
+            }
+        }
+        //在抛出异常时  会执行此处代码
+        return getSkuInfoDBById(skuId);
+    }
 
-        System.out.println("缓存中没有数据");
-        //3:没有 再去Mysql数据库中查询
-        //1)根据SKUID查询库存表
-        SkuInfo skuInfo1 = skuInfoMapper.selectById(skuId);
-        //判断获取Mysql数据中SkuInfo是否为NULL  为NULL表示人为攻击 返回空结果
-        if(null == skuInfo1){
-            skuInfo1 = new SkuInfo();
-            System.out.println("有人攻击我们网站：skuId不存在：返回空结果");
-            redisTemplate.opsForValue().set(key,skuInfo1,5, TimeUnit.MINUTES);//过期时间为5分钟
+    //提取根据库存Id 查询Mysql数据库的SkuInfo
+    public SkuInfo getSkuInfoDBById(Long skuId) {
+        //此处也会出现穿透的情况：
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        if(null == skuInfo){
+            skuInfo = new SkuInfo();
             return skuInfo;
         }
-        //2)根据SKUID查询库存图片表
         List<SkuImage> skuImageList = skuImageMapper.
                 selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
-        skuInfo1.setSkuImageList(skuImageList);
-        System.out.println("缓存中再次保存了一份数据：" + JSON.toJSONString(skuInfo));
-
-        //随机数
-        Random random = new Random();
-        int i = random.nextInt(300);
-        //4:再保存缓存一份
-        redisTemplate.opsForValue().set(key,skuInfo1,
-                RedisConst.SKUKEY_TIMEOUT + i,TimeUnit.SECONDS);//key:String类型 V：任何类型 底层转成JSon格式字符串
-        //5:返回
-        return skuInfo1;
+        skuInfo.setSkuImageList(skuImageList);
+        return skuInfo;
     }
+
+    //根据skuId 查询库存表 普通的实现
+//    public SkuInfo getSkuInfo(Long skuId) {
+//        //1:先去Redis缓存中获取   五大数据类型 ： 常用 String类型  Hash类型  偶尔使用List
+//        String key = RedisConst.SKUKEY_PREFIX + skuId + RedisConst.SKUKEY_SUFFIX;
+//        SkuInfo skuInfo = (SkuInfo) redisTemplate.opsForValue().get(key);
+//        if(null != skuInfo){
+//            System.out.println("缓存中已经有数据了：" + JSON.toJSONString(skuInfo));
+//            //2:有 直接返回
+//            return skuInfo;
+//        }
+//
+//        System.out.println("缓存中没有数据");
+//        //3:没有 再去Mysql数据库中查询
+//        //1)根据SKUID查询库存表
+//        SkuInfo skuInfo1 = skuInfoMapper.selectById(skuId);
+//        //判断获取Mysql数据中SkuInfo是否为NULL  为NULL表示人为攻击 返回空结果
+//        if(null == skuInfo1){
+//            skuInfo1 = new SkuInfo();
+//            System.out.println("有人攻击我们网站：skuId不存在：返回空结果");
+//            redisTemplate.opsForValue().set(key,skuInfo1,5, TimeUnit.MINUTES);//过期时间为5分钟
+//            return skuInfo;
+//        }
+//        //2)根据SKUID查询库存图片表
+//        List<SkuImage> skuImageList = skuImageMapper.
+//                selectList(new QueryWrapper<SkuImage>().eq("sku_id", skuId));
+//        skuInfo1.setSkuImageList(skuImageList);
+//        System.out.println("缓存中再次保存了一份数据：" + JSON.toJSONString(skuInfo));
+//
+//        //随机数
+//        Random random = new Random();
+//        int i = random.nextInt(300);
+//        //4:再保存缓存一份
+//        redisTemplate.opsForValue().set(key,skuInfo1,
+//                RedisConst.SKUKEY_TIMEOUT + i,TimeUnit.SECONDS);//key:String类型 V：任何类型 底层转成JSon格式字符串
+//        //5:返回
+//        return skuInfo1;
+//    }
 
 
     //根据三级分类的ID 查询一二三级分类的ID、名称
     @Override
+    @GmallCache(prefix="getBaseCategoryView")
     public BaseCategoryView getBaseCategoryView(Long category3Id) {
         return baseCategoryViewMapper.selectById(category3Id);
     }
@@ -284,7 +364,7 @@ public class ManageServiceImpl implements ManageService {
     @Override
     public BigDecimal getPrice(Long skuId) {
         SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
-        if(null != skuInfo){
+        if (null != skuInfo) {
             //防止NULL指针异常
             return skuInfo.getPrice();
         }
@@ -296,7 +376,7 @@ public class ManageServiceImpl implements ManageService {
     @Override
     public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId) {
 
-        return spuSaleAttrMapper.getSpuSaleAttrListCheckBySku(skuId,spuId);
+        return spuSaleAttrMapper.getSpuSaleAttrListCheckBySku(skuId, spuId);
     }
 
     //查询组合对应库存ID
@@ -307,7 +387,7 @@ public class ManageServiceImpl implements ManageService {
         List<Map> skuValueIdsMap = skuSaleAttrValueMapper.getSkuValueIdsMap(spuId);
         //Map1  K:values_id V:1|13|11   K：sku_id V:10
         skuValueIdsMap.forEach(map -> {
-            result.put(map.get("values_id"),map.get("sku_id"));
+            result.put(map.get("values_id"), map.get("sku_id"));
         });
         return result;
     }

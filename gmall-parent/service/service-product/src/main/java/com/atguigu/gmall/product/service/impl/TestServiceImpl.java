@@ -56,7 +56,7 @@ public class TestServiceImpl implements TestService {
             //3:解锁 具备原子性操作
             //LUA脚本  LUA 由C语言 写的脚本  Nginx上运行可以Redis上运行 Nginx与Redis都C语言写的
             String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-            this.redisTemplate.execute(new DefaultRedisScript<>(script), Arrays.asList("lock"), Arrays.asList(uuid));
+            this.redisTemplate.execute(new DefaultRedisScript<>(script), Arrays.asList("lock"), uuid);
 //            //1)获取此锁的值 判断是否是自己的锁
 //            String code = (String) redisTemplate.opsForValue().get("lock");
 //            if(!StringUtils.isEmpty(code) && uuid.equals(code)){
