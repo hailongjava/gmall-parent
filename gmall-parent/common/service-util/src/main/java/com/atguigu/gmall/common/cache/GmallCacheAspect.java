@@ -85,6 +85,6 @@ public class GmallCacheAspect {
                 lock.unlock();
             }
         }
-        return JSONObject.parseObject(new String(),returnType);//空结果
+        return JSONObject.parseObject("{}",returnType);//空结果
     }
 }
