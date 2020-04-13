@@ -2,6 +2,7 @@ package com.atguigu.gmall.common.cache;
 
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.constant.RedisConst;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
@@ -27,27 +28,32 @@ import java.util.concurrent.TimeUnit;
 public class GmallCacheAspect {
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate redisTemplate;//此Redis 保存Value值的时候 此Value要求必须实现序列化接口
     @Autowired
-    private RedissonClient redissonClient;
+    private RedissonClient redissonClient;//上锁
 
     //方法  完成缓存的方法
     @Around(value = "@annotation(com.atguigu.gmall.common.cache.GmallCache)")//进入此切面方法的条件
     public Object cacheAspectMethod(ProceedingJoinPoint pjp){
-
         //获取前缀
         MethodSignature signature = (MethodSignature) pjp.getSignature();//签名==当前方法的  public  返回值  包名+ 类名 + 方法名 + 入参
         Method method = signature.getMethod();
-        GmallCache gmallCache = method.getAnnotation(GmallCache.class);
-        //返回值 类型
-        Class returnType = signature.getReturnType();
 
-        String prefix = gmallCache.prefix();
-        //入参
+
+        //1：缓存注解
+        GmallCache gmallCache = method.getAnnotation(GmallCache.class);
+        //2：返回值 类型 Object无法保存Redis中
+        Class returnType = signature.getReturnType();//BaseCategoryView
+        //3：入参
         Object[] args = pjp.getArgs();
+
+
+        //唯一的    @GmallCache(prefix="getBaseCategoryView")
+        String prefix = gmallCache.prefix();
+
         //缓存Key值
-        String key = prefix + Arrays.asList(args).toString();
-        //1:从缓存中查询
+        String key = prefix + Arrays.asList(args).toString();//[1,4]
+        //1:从缓存中查询   K:String  V：任何类型（底层肯定会将任何类型转成Json格式字符串）
         String o = (String) redisTemplate.opsForValue().get(key);
         if(null != o){
             //2:有  直接返回
@@ -67,6 +73,7 @@ public class GmallCacheAspect {
                 if(null == proceed){
                     Object o1 = new Object();
                     String json = JSONObject.toJSONString(o1);
+                    //    "{}"
                     redisTemplate.opsForValue().set(key,json,5,TimeUnit.MINUTES);
                     return JSONObject.parseObject("{}",returnType);
                 }else{
@@ -85,6 +92,6 @@ public class GmallCacheAspect {
                 lock.unlock();
             }
         }
-        return JSONObject.parseObject("{}",returnType);//空结果
+        return JSONObject.parseObject("{}",returnType);//空结果 //BaseCategoryView
     }
 }

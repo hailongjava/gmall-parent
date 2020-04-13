@@ -51,16 +51,19 @@ public class RedisConfig {
     public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
-        // RedisTemplate 操作五大数据类型 ：
-
+        // RedisTemplate 操作五大数据类型 ：配置Value类型  配置Hash类型 其它类型没有配置 使用太少
 
 
         Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
         // @RequestBody  @ResponseBody 的底层实现
-        ObjectMapper objectMapper = new ObjectMapper();//JSONObject  alibaba
+        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
         jackson2JsonRedisSerializer.setObjectMapper(objectMapper);
+
+        //JSONObject  alibaba  转Object到Json格式字符串  Object可以不实现序列化接口
+        //ObjectMapper  转Object到Json格式字符串  Object就必须实现序列化接口
+        //Redis 官方  ： ObjectMapper 遵循官方
 
 
         //序列号key value

@@ -1019,7 +1019,6 @@
 
         methods: {
             init() {
-                debugger
                 this.spuSaleAttrList.forEach((spuSaleAttr, index) => {
                     spuSaleAttr.index = index
                     spuSaleAttr.spuSaleAttrValueList.forEach((spuSaleAttrValue) => {
@@ -1040,7 +1039,6 @@
             },
 
             spuSaleAttrFun(index, spuSaleAttrValueId) {
-                debugger
                 this.isAddCart = true
                 var valuesSkuJson = JSON.parse(this.valuesSkuJson);
 

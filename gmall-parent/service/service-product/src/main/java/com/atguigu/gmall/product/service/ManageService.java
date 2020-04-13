@@ -49,4 +49,6 @@ public interface ManageService {
     List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long skuId, Long spuId);
 
     Map getSkuValueIdsMap(Long spuId);
+
+    List<Map> getBaseCategoryList();
 }

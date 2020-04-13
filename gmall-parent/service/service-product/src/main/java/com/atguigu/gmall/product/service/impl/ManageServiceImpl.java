@@ -18,11 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 后台管理 业务层
@@ -389,6 +387,37 @@ public class ManageServiceImpl implements ManageService {
         skuValueIdsMap.forEach(map -> {
             result.put(map.get("values_id"), map.get("sku_id"));
         });
+        return result;
+    }
+
+
+    //查询分类视图对象集合 （查询全部）
+    @Override
+    public List<Map> getBaseCategoryList() {
+        //结果对象
+        List<Map> result = new ArrayList<>();
+
+        List<BaseCategoryView> baseCategoryViewList = baseCategoryViewMapper.selectList(null);
+        //一级分类ID进行分组查询
+        Map<Long, List<BaseCategoryView>> baseCategoryViewByCategory1Id = baseCategoryViewList.
+                stream().collect(Collectors.groupingBy(BaseCategoryView::getCategory1Id));
+        //Map1 k: 1 V:List<BaseCategoryView>  60  ID:1-60
+        //Map2 k: 2 V:List<BaseCategoryView>  24 ID:61-85
+        //定义角标
+        int index = 1;
+        for (Map.Entry<Long, List<BaseCategoryView>> category1IdEntry :
+                baseCategoryViewByCategory1Id.entrySet()) {
+            Map  category1IdMap = new HashMap();
+            //1:角标
+            category1IdMap.put("index",index++);
+            //2:一级分类的Id
+            category1IdMap.put("categoryId",category1IdEntry.getKey());
+            //3:一级分类的名称
+            category1IdMap.put("categoryName",category1IdEntry.getValue().get(0).getCategory1Name());
+            //4:二级分类的子节点
+            category1IdMap.put("categoryChild","二级分类的集合");
+            result.add(category1IdMap);
+        }
         return result;
     }
 
