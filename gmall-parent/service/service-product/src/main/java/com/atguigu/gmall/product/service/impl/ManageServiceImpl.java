@@ -415,7 +415,35 @@ public class ManageServiceImpl implements ManageService {
             //3:一级分类的名称
             category1IdMap.put("categoryName",category1IdEntry.getValue().get(0).getCategory1Name());
             //4:二级分类的子节点
-            category1IdMap.put("categoryChild","二级分类的集合");
+            //4-1:查询二级分类的集合
+            Map<Long, List<BaseCategoryView>> baseCategoryViewByCategory2Id = category1IdEntry.getValue().stream().collect(
+                    Collectors.groupingBy(BaseCategoryView::getCategory2Id));
+            //Map1 K:二级分类的ID V：  长度是4
+            List<Map> result2 = new ArrayList<>();
+            for (Map.Entry<Long, List<BaseCategoryView>> category2IdEntry : baseCategoryViewByCategory2Id.entrySet()) {
+                Map category2IdMap = new HashMap();
+                //三级分类的集合
+                List<BaseCategoryView> category3IdValue = category2IdEntry.getValue();
+
+                //1:二级分类的ID
+                category2IdMap.put("categoryId",category2IdEntry.getKey());
+                //2:二级分类的名称
+                category2IdMap.put("categoryName", category3IdValue.get(0).getCategory2Name());
+                //3:三级分类的集合
+                //4-1-3
+                List<Map> result3 = new ArrayList<>();
+                for (BaseCategoryView baseCategoryView : category3IdValue) {
+                    Map category3IdMap = new HashMap();
+                    //1:三级分类的ID
+                    category3IdMap.put("categoryId",baseCategoryView.getCategory3Id());
+                    //2:三级分类的名称
+                    category3IdMap.put("categoryName",baseCategoryView.getCategory3Name());
+                    result3.add(category3IdMap);
+                }
+                category2IdMap.put("categoryChild",result3);
+                result2.add(category2IdMap);
+            }
+            category1IdMap.put("categoryChild",result2);
             result.add(category1IdMap);
         }
         return result;

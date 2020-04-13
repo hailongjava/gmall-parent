@@ -22,3 +22,7 @@ spring:
           uri: lb://web-all  #前台页面微服务 名称
           predicates:
             - Host=item.gmall.com
+        - id: web-index
+          uri: lb://web-all  #前台页面微服务 名称
+          predicates:
+            - Host=www.gmall.com

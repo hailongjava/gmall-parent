@@ -17,6 +17,10 @@ import java.util.Map;
 @Component
 public class ProductDegradeFeignClient implements ProductFeignClient {
 
+    @Override
+    public List<Map> getBaseCategoryList() {
+        return null;
+    }
 
     @Override
     public SkuInfo getSkuInfo(Long skuId) {
