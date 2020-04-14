@@ -64,4 +64,7 @@ public class ListController {
         listService.incrHotScore(skuId);
         return Result.ok();
     }
+
+
+
 }
