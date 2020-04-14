@@ -6,6 +6,7 @@ import com.atguigu.gmall.product.client.ProductFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,6 +60,8 @@ public class IndexController {
         Writer out = null;
         try {
             //编码 ： 写也是 utf-8
+            //String path = ClassUtils.getDefaultClassLoader().getResource("/") + "templates\\index.html";
+            //request.getSession.getServletContext.getRealPath
             //out = new PrintWriter(new File("D:\\temp\\index.html"),"utf-8");
             out = new PrintWriter(new File("D:\\IdeaProjects\\gmall-191010\\gmall-parent\\web\\web-all\\target\\classes\\templates\\index.html"),"utf-8");
             //3:模板  读是UTF-8

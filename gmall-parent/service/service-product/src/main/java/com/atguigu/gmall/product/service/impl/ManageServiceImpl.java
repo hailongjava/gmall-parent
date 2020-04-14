@@ -449,6 +449,16 @@ public class ManageServiceImpl implements ManageService {
         return result;
     }
 
+    @Override
+    public BaseTrademark getTrademarkByTmId(Long tmId) {
+        return baseTrademarkMapper.selectById(tmId);
+    }
+    //根据skuId 查询 平台属性ID、属性名称、及平台属性值
+    @Override
+    public List<SkuAttrValue> getSkuAttrValueList(Long skuId) {
+        return skuAttrValueMapper.getSkuAttrValueList(skuId);
+    }
+
     @Autowired
     private BaseCategoryViewMapper baseCategoryViewMapper;
     @Autowired
