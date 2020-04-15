@@ -9,28 +9,29 @@ import com.atguigu.gmall.model.product.BaseTrademark;
 import com.atguigu.gmall.model.product.SkuAttrValue;
 import com.atguigu.gmall.model.product.SkuInfo;
 import com.atguigu.gmall.product.client.ProductFeignClient;
-import javafx.stage.Screen;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.LongTerms;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -190,6 +191,25 @@ public class ListServiceImpl implements ListService {
             return tmVo;
         }).collect(Collectors.toList());
         vo.setTrademarkList(tmVoList);
+        //4:平台属性集合结果解析  private List<SearchResponseAttrVo> attrsList = new ArrayList<>();
+        ParsedNested attrsAgg = (ParsedNested) searchResponse.getAggregations().asMap().get("attrsAgg");
+        ParsedLongTerms attrIdAgg = attrsAgg.getAggregations().get("attrIdAgg");
+        List<SearchResponseAttrVo> attrsVoList = attrIdAgg.getBuckets().stream().map(bucket -> {
+            SearchResponseAttrVo attrVo = new SearchResponseAttrVo();
+            //1:平台属性ID
+            attrVo.setAttrId(Long.parseLong(bucket.getKeyAsString()));
+            //2;平台属性名称
+            ParsedStringTerms attrNameAgg = bucket.getAggregations().get("attrNameAgg");
+            attrVo.setAttrName(attrNameAgg.getBuckets().get(0).getKeyAsString());
+            //3:平台属性值集合
+            ParsedStringTerms attrValueAgg = bucket.getAggregations().get("attrValueAgg");
+            List<String> bucketValueList = attrValueAgg.getBuckets().stream().
+                    map(MultiBucketsAggregation.Bucket::getKeyAsString).collect(Collectors.toList());
+            attrVo.setAttrValueList(bucketValueList);
+            return attrVo;
+        }).collect(Collectors.toList());
+        //设置平台属性解析结果
+        vo.setAttrsList(attrsVoList);
         return vo;
     }
 
@@ -199,17 +219,77 @@ public class ListServiceImpl implements ListService {
         SearchRequest searchRequest = new SearchRequest();
         //构建条件对象
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        //组合条件对象（多条件组合 ）
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         //1：关键词
         //searchSourceBuilder.query(QueryBuilders.matchAllQuery());//查询所有索引库的数据
         //matchQuery : 匹配查询
         // 1）先分词 我是中国人   like %我%  OR  like %是%  OR like %中国 OR like %国人 OR like %中国人%
         String keyword = searchParam.getKeyword();
         if (!StringUtils.isEmpty(keyword)) {
-            searchSourceBuilder.query(QueryBuilders.matchQuery("title", keyword));
+            boolQueryBuilder.must(QueryBuilders.matchQuery("title", keyword));
         }
-        //2:过滤条件   暂时不查询
+        //2:过滤条件
+        // 品牌  、  品牌的ID、名称   页面传递过来的ID、名称都是字符串类型  接收的时候 Long Springmvc 转换的
+        //  品牌ID:品牌名称
+        String trademark = searchParam.getTrademark();
+        if(!StringUtils.isEmpty(trademark)){
+            String[] t = StringUtils.split(trademark, ":");
+            boolQueryBuilder.filter(QueryBuilders.termQuery("tmId",t[0]));
+        }
+        // 一二三级分类ID 、
+        Long category1Id = searchParam.getCategory1Id();
+        if(null != category1Id){
+            boolQueryBuilder.filter(QueryBuilders.termQuery("category1Id",category1Id));
+        }
+        Long category2Id = searchParam.getCategory2Id();
+        if(null != category2Id){
+            boolQueryBuilder.filter(QueryBuilders.termQuery("category2Id",category2Id));
+        }
+        Long category3Id = searchParam.getCategory3Id();
+        if(null != category3Id){
+            boolQueryBuilder.filter(QueryBuilders.termQuery("category3Id",category3Id));
+        }
+        // 平台属性
+        String[] props = searchParam.getProps();
+        if(null != props && props.length > 0){
+            //有平台属性进行过滤
+            for (String prop : props) {//5次
+                // 平台属性ID:平台属性值名称:平台属性名称
+                String[] p = prop.split(":");//3
+                //子组合对象
+                BoolQueryBuilder subQueryBuilder = QueryBuilders.boolQuery();
+                //平台属性ID
+                // nestedQuery:嵌套条件对象nestedQuery  参数1：路径 参数2：精准查询 参数3：计算模式
+                //   if( null != haha && haha.size > 0)   where and  or  not
+                subQueryBuilder.must(QueryBuilders.termQuery("attrs.attrId",p[0]));
+                //平台属性值名称
+                subQueryBuilder.must(QueryBuilders.termQuery("attrs.attrValue",p[1]));
 
-        //3:排序   暂时不排序
+                //外面父组合对象 追加多个子组合对象
+                boolQueryBuilder.filter(QueryBuilders.
+                        nestedQuery("attrs",subQueryBuilder,ScoreMode.None));
+            }
+        }
+
+        //设置组合对象
+        searchSourceBuilder.query(boolQueryBuilder);
+        //3:排序   K:V   K： 1 2 3  4    1：综合  2：价格 3：新品 ||||   V：desc 或 asc
+        // 综合排序： 默认是热度评分
+        //
+        String order = searchParam.getOrder();
+        if(!StringUtils.isEmpty(order)){
+            String[] o = StringUtils.split(order, ":");//2
+            //排序字段
+            String orderSort = "";
+            switch (o[0]){
+                case "1": orderSort = "hotScore"; break;
+                case "2": orderSort = "price"; break;
+            }
+            searchSourceBuilder.sort(orderSort,
+                    o[1].equalsIgnoreCase("asc") ? SortOrder.ASC:SortOrder.DESC);
+
+        }
 
         //4:分页
         Integer pageNo = searchParam.getPageNo();
@@ -218,16 +298,31 @@ public class ListServiceImpl implements ListService {
         searchSourceBuilder.from((pageNo - 1) * pageSize);
         //每页数
         searchSourceBuilder.size(pageSize);
-        //5:高亮  暂时不高亮
+        //5:高亮
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        //高亮的字段  ES 字段 == 域
+        highlightBuilder.field("title");
+        //前缀
+        highlightBuilder.preTags("<font color='red'>");
+        //后缀
+        highlightBuilder.postTags("</font>");
+        searchSourceBuilder.highlighter(highlightBuilder);
 
-        //6:分组查询
+        //6:分组查询  List<对象> tmIds  对象 （tmId  tmName List<平台属性值》)
         //品牌分组查询    需要起别名： 目地是为了将查询进通过别名获取出来
         searchSourceBuilder.aggregation(AggregationBuilders.terms("tmIdAgg").field("tmId")
                               .subAggregation(AggregationBuilders.terms("tmNameAgg").field("tmName")));
-        //平台属性分组查询  暂时不平台属性分组查询
+        //平台属性分组查询  nested：嵌套分组  attrs:[ attrId:1
+        searchSourceBuilder.aggregation(
+                AggregationBuilders.nested("attrsAgg","attrs")
+                   .subAggregation(AggregationBuilders.terms("attrIdAgg").field("attrs.attrId")
+                   .subAggregation(AggregationBuilders.terms("attrNameAgg").field("attrs.attrName"))
+                   .subAggregation(AggregationBuilders.terms("attrValueAgg").field("attrs.attrValue"))));
+
         //指定查询的索引库
         searchRequest.indices("goods");
         searchRequest.source(searchSourceBuilder);
+        searchRequest.types("info");//6.8.1 版本
         return searchRequest;
     }
 }
