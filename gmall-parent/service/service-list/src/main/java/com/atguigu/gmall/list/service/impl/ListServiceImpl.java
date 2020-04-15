@@ -15,6 +15,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -26,16 +27,14 @@ import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +66,7 @@ public class ListServiceImpl implements ListService {
         //4:价格
         goods.setPrice(skuInfo.getPrice().doubleValue());
         //5:当前时间
-        goods.setCreateTime(new Date());
+        //goods.setCreateTime(new Date());
         //6:品牌ID
         goods.setTmId(skuInfo.getTmId());
         //7:品牌名称
@@ -174,7 +173,15 @@ public class ListServiceImpl implements ListService {
         if (null != hits1 && hits1.length > 0) {
             List<Goods> goodsList = Arrays.stream(hits1).map(searchHit -> {
                 //商品数据  // 商品数据 Json格式字符串
-                return JSON.parseObject(searchHit.getSourceAsString(), Goods.class);
+                Goods goods = JSON.parseObject(searchHit.getSourceAsString(), Goods.class);
+                //判断是否有高亮  title
+                Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
+                if(null != highlightFields && highlightFields.size() > 0){
+                    HighlightField title = highlightFields.get("title");
+                    String titleHighlight = title.fragments()[0].toString();
+                    goods.setTitle(titleHighlight);
+                }
+                return goods;
             }).collect(Collectors.toList());
             vo.setGoodsList(goodsList);
         }
@@ -225,9 +232,11 @@ public class ListServiceImpl implements ListService {
         //searchSourceBuilder.query(QueryBuilders.matchAllQuery());//查询所有索引库的数据
         //matchQuery : 匹配查询
         // 1）先分词 我是中国人   like %我%  OR  like %是%  OR like %中国 OR like %国人 OR like %中国人%
+        //  苹果手机   like %苹果&  and like %手机&   并集 应该取交集
         String keyword = searchParam.getKeyword();
         if (!StringUtils.isEmpty(keyword)) {
-            boolQueryBuilder.must(QueryBuilders.matchQuery("title", keyword));
+            boolQueryBuilder.must(QueryBuilders.matchQuery("title", keyword)
+                    .operator(Operator.AND));
         }
         //2:过滤条件
         // 品牌  、  品牌的ID、名称   页面传递过来的ID、名称都是字符串类型  接收的时候 Long Springmvc 转换的

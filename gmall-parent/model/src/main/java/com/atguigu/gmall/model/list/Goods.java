@@ -6,6 +6,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +25,7 @@ import java.util.List;
  */
 @Document(indexName = "goods", type = "info", shards = 3, replicas = 2)
 @Data
-public class Goods {
+public class Goods implements Serializable {
 
     @Id
     private Long id;
