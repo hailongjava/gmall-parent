@@ -115,7 +115,7 @@
             submitLogin() {
                 login.login(this.user).then(response => {
                     if (response.data.code == 200) {
-                        //把token存在cookie中、也可以放在localStorage中
+                        //把token存在cookie中、也可以放在localStorage中   //SessionStorage
                         auth.setToken(response.data.data.token)
                         auth.setUserInfo(JSON.stringify(response.data.data))
                         if(this.originUrl == ''){

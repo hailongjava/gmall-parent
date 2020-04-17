@@ -298,6 +298,9 @@ public class ListServiceImpl implements ListService {
             searchSourceBuilder.sort(orderSort,
                     o[1].equalsIgnoreCase("asc") ? SortOrder.ASC:SortOrder.DESC);
 
+        }else{
+            //默认按照  热度评分 由高到低排序
+            searchSourceBuilder.sort("hotScore",SortOrder.DESC);
         }
 
         //4:分页
