@@ -38,3 +38,10 @@ spring:
           uri: lb://web-all  #前台页面微服务 名称
           predicates:
             - Host=passport.gmall.com
+        - id: web-cart
+          uri: lb://web-all  #前台页面微服务 名称
+          predicates:
+            - Host=cart.gmall.com
+  redis:
+    host: 192.168.200.128
+authUrls: trade.html,pay.html,myOrder.html
