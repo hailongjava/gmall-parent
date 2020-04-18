@@ -369,7 +369,7 @@
         },
 
         methods: {
-            init() {
+            init() {// 初始化加载购物车集合
                 cart.cartList().then(response => {
                     this.data = response.data.data
                     this.compute()
@@ -378,7 +378,7 @@
 
             // 计算
             compute() {
-                if(this.data == null) return
+                if(this.data == null) return// List<CartInfo>
                 this.count = 0
                 this.total = 0;
                 for(var i=0; i<this.data.length; i++) {
@@ -405,7 +405,7 @@
                 }
             },
 
-            checkCart(item) {
+            checkCart(item) {//取反
                 var isChecked = item.isChecked
                 if (isChecked == 1) {
                     isChecked = 0
@@ -426,7 +426,7 @@
 
             trade() {
                 if(!auth.isLogin()) {
-                    window.location.href = 'http://www.gmall.com/login.html?originUrl='+window.location.href
+                    window.location.href = 'http://passport.gmall.com/login.html?originUrl='+ encodeURIComponent(window.location.href)
                     return
                 }
 
