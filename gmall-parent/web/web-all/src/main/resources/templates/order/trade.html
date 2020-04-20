@@ -103,7 +103,7 @@
 								</div>
 								<div class="buyMessage">
 									<span>买家留言：</span>
-									<textarea placeholder="建议留言前先与商家沟通确认" class="remarks-cont"></textarea>
+									<textarea placeholder="建议留言前先与商家沟通确认" class="remarks-cont" ></textarea>
 								</div>
 							</li>
 							<li></li>
@@ -311,7 +311,7 @@
             }
 		},
 
-        created() {
+        created() {//钩子
             this.init()
         },
 
@@ -328,15 +328,13 @@
                 })
             },
 
-            submitOrder() {
+            submitOrder() {//Vue aixa
                 trade.submitOrder(this.order, this.tradeNo).then(response => {
-
                     if (response.data.code == 200) {
                         window.location.href = 'http://payment.gmall.com/pay.html?orderId=' + response.data.data
                     } else {
                         alert(response.data.message)
                     }
-
                 })
             },
 

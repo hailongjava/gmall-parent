@@ -5,6 +5,7 @@ import com.atguigu.gmall.cart.client.CartFeignClient;
 import com.atguigu.gmall.model.cart.CartInfo;
 import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.user.UserAddress;
+import com.atguigu.gmall.order.client.OrderFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +27,8 @@ public class OrderController {
     private AddressFeignClient addressFeignClient;
     @Autowired
     private CartFeignClient cartFeignClient;
+    @Autowired
+    private OrderFeignClient orderFeignClient;
     //结算
     @GetMapping("/trade.html")
     public String trade(Model model){
@@ -35,9 +38,6 @@ public class OrderController {
         model.addAttribute("userAddressList",addressList);
         //2:商品清单  （订单详情集合）  来源于购物车   购物车微服务
         List<CartInfo> cartCheckedList = cartFeignClient.getCartCheckedList();
-
-
-
         //List<OrderDetail>
         List<OrderDetail> orderDetailList = cartCheckedList.stream().map(cartInfo -> {
             OrderDetail orderDetail = new OrderDetail();
@@ -66,6 +66,10 @@ public class OrderController {
                 })).getSum();
         model.addAttribute("totalNum",totalNum);
         model.addAttribute("totalAmount",totalAmount);
+
+        //3:交易号
+        String tradeNo = orderFeignClient.getTradeNo();
+        model.addAttribute("tradeNo",tradeNo);
 
         return "order/trade";
     }
