@@ -7,5 +7,5 @@ public interface OrderService {
 
     boolean hasStock(Long skuId, Integer skuNum);
 
-    void sumbitOrder(OrderInfo orderInfo);
+    Long sumbitOrder(OrderInfo orderInfo);
 }

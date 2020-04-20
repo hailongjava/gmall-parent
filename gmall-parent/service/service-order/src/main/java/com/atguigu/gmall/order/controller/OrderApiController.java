@@ -69,8 +69,8 @@ public class OrderApiController {
         }
         //3;保存订单 订单详情
         orderInfo.setUserId(Long.parseLong(userId));
-        orderService.sumbitOrder(orderInfo);
-        return Result.ok();
+        Long orderId = orderService.sumbitOrder(orderInfo);
+        return Result.ok(orderId);
     }
 
 
