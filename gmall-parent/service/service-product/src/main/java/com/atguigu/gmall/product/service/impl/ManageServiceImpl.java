@@ -2,7 +2,9 @@ package com.atguigu.gmall.product.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.cache.GmallCache;
+import com.atguigu.gmall.common.constant.MqConst;
 import com.atguigu.gmall.common.constant.RedisConst;
+import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.*;
 import com.atguigu.gmall.product.service.ManageService;
@@ -216,6 +218,8 @@ public class ManageServiceImpl implements ManageService {
         return skuInfoMapper.selectPage(new Page<SkuInfo>(page, limit), null);
     }
 
+    @Autowired
+    private RabbitService rabbitService;
     //上架
     @Override
     public void onSale(Long skuId) {
@@ -224,8 +228,10 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(1);
         skuInfoMapper.updateById(skuInfo);
-        //2:保存索引
-        //TODO
+        //2:保存索引  发消息
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,
+                MqConst.ROUTING_GOODS_UPPER,skuId);
+
 
     }
 
@@ -237,7 +243,8 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
         //2:删除索引
-        //TODO
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,
+                MqConst.ROUTING_GOODS_LOWER,skuId);
     }
 
 
