@@ -1,5 +1,7 @@
 package com.atguigu.gmall.mq.listener;
 
+import com.atguigu.gmall.mq.config.DeadLetterConfig;
+import com.atguigu.gmall.mq.config.DelayLetterConfig;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -54,5 +56,21 @@ public class RecerverMessage {
         }
     }
 
+    //接收基于死信延迟消息
+    @RabbitListener(queues = DeadLetterConfig.queue_dead_2)
+    public void receiverDeadLetter(Message message, Channel channel) throws Exception{
+
+        System.out.println(new String(message.getBody()));
+
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(),true);
+    }
+    //接收基于插件延迟消息
+    @RabbitListener(queues = DelayLetterConfig.queue_delay_1)
+    public void receiverDelay(Message message, Channel channel) throws Exception{
+
+        System.out.println(new String(message.getBody()));
+
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(),true);
+    }
 
 }

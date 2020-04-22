@@ -8,4 +8,8 @@ public interface OrderService {
     boolean hasStock(Long skuId, Integer skuNum);
 
     Long sumbitOrder(OrderInfo orderInfo);
+
+    void cancelOrder(Long orderId);
+
+    OrderInfo getOrderInfoById(Long orderId);
 }

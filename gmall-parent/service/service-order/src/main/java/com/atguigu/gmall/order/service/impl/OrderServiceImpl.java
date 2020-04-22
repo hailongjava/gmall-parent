@@ -1,5 +1,7 @@
 package com.atguigu.gmall.order.service.impl;
 
+import com.atguigu.gmall.common.constant.MqConst;
+import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.common.util.HttpClientUtil;
 import com.atguigu.gmall.model.enums.OrderStatus;
 import com.atguigu.gmall.model.enums.ProcessStatus;
@@ -10,8 +12,10 @@ import com.atguigu.gmall.order.mapper.OrderDetailMapper;
 import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.service.OrderService;
 import com.atguigu.gmall.product.client.ProductFeignClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.amqp.RabbitRetryTemplateCustomizer;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +43,8 @@ public class OrderServiceImpl implements OrderService {
     private ProductFeignClient productFeignClient;
     @Autowired
     private CartInfoMapper cartInfoMapper;
+    @Autowired
+    private RabbitService rabbitService;
     //生成交易号
     @Override
     public String getTradeNo(String userId) {
@@ -104,8 +110,38 @@ public class OrderServiceImpl implements OrderService {
 //        columnMap.put("is_checked",1);
 //        cartInfoMapper.deleteByMap(columnMap);
 
-        //TODO 第五步：   2个小时 以后用户没有付钱  此订单取消
-        //TODO 此2小时从提交订单开始计时  RabbitMQ高级知识
+        // 第五步：   2个小时 以后用户没有付钱  此订单取消
+        // 此2小时从提交订单开始计时  RabbitMQ高级知识  闹钟
+        rabbitService.sendDelayMessage(MqConst.EXCHANGE_DIRECT_ORDER_CANCEL
+        ,MqConst.ROUTING_ORDER_CANCEL,orderInfo.getId(),MqConst.DELAY_TIME);
+
         return orderInfo.getId();
+    }
+
+
+    //延迟消息 来完成订单的取消
+    @Override
+    public void cancelOrder(Long orderId) {
+        //1:判断订单未付钱    实际情况是：2个小时之后 订单仍然未支付  就要取消订单
+        //本次为了快速测试  延迟时间是1分钟
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        //判断订单的状态是否为未支付
+        if(OrderStatus.UNPAID.name().equals(orderInfo.getOrderStatus())){
+            //取消订单
+            //更新订单的状态为关闭
+            orderInfo.setOrderStatus(OrderStatus.CLOSED.name());
+            //更新订单的进度状态为关闭
+            orderInfo.setProcessStatus(ProcessStatus.CLOSED.name());
+            //更新订单的失效时间
+            orderInfo.setExpireTime(new Date());
+            //更新订单
+            orderInfoMapper.updateById(orderInfo);
+        }
+
+    }
+  //根据订单ID查询订单信息
+    @Override
+    public OrderInfo getOrderInfoById(Long orderId) {
+        return orderInfoMapper.selectById(orderId);
     }
 }

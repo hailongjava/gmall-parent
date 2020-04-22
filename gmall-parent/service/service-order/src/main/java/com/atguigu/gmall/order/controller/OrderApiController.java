@@ -2,6 +2,7 @@ package com.atguigu.gmall.order.controller;
 
 
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.common.util.AuthContextHolder;
 import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.order.OrderInfo;
@@ -26,6 +27,12 @@ public class OrderApiController {
     private OrderService orderService;
     @Autowired
     private RedisTemplate redisTemplate;
+
+    //根据订单ID查询订单信息
+    @GetMapping("/getOrderInfo/{orderId}")
+    public OrderInfo getOrderInfoById(@PathVariable(name = "orderId") Long orderId){
+        return orderService.getOrderInfoById(orderId);
+    }
 
     //交易号
     @GetMapping("/inner/getTradeNo")
@@ -71,6 +78,13 @@ public class OrderApiController {
         orderInfo.setUserId(Long.parseLong(userId));
         Long orderId = orderService.sumbitOrder(orderInfo);
         return Result.ok(orderId);
+    }
+    @Autowired
+    RabbitService rabbitService;
+    @GetMapping("/haha")
+    public void haha(){
+
+        rabbitService.sendMessage("exchange.1","","hahaee");
     }
 
 
