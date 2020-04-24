@@ -136,6 +136,7 @@ public class OrderServiceImpl implements OrderService {
             orderInfo.setExpireTime(new Date());
             //更新订单
             orderInfoMapper.updateById(orderInfo);
+
         }
 
     }
@@ -143,5 +144,19 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderInfo getOrderInfoById(Long orderId) {
         return orderInfoMapper.selectById(orderId);
+    }
+
+
+    //更新订单  幂等性问题
+    @Override
+    public void updateOrder(Long orderId) {
+        //订单是未支付情况下 更新订单的状态为已支付
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if(OrderStatus.UNPAID.name().equals(orderInfo.getOrderStatus())){
+            orderInfo.setOrderStatus(OrderStatus.PAID.name());
+            orderInfo.setProcessStatus(ProcessStatus.PAID.name());
+            orderInfoMapper.updateById(orderInfo);
+        }
+
     }
 }

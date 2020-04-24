@@ -13,7 +13,7 @@ import java.util.Map;
  * 1、取消订单
  * 2、
  */
-@Configuration
+//@Configuration
 public class OrderMQConfig {
 
 

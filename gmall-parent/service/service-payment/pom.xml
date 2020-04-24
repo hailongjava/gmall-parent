@@ -11,7 +11,19 @@
 
     <artifactId>service-payment</artifactId>
 
-    <dependencies>    </dependencies>
+    <dependencies>
+        <!--导入支付宝支付sdk-->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>4.8.73.ALL</version>
+        </dependency>
+        <dependency>
+            <groupId>com.atguigu.gmall</groupId>
+            <artifactId>rabbit-util</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <finalName>service-payment</finalName>

@@ -30,9 +30,14 @@ public class ProductDegradeFeignClient implements ProductFeignClient {
         return null;
     }
 
+
+    //根据ID获取SkuINfo
     @Override
     public SkuInfo getSkuInfo(Long skuId) {
-        return null;
+        //远程调用 getSkuInfo 抛出异常
+        SkuInfo skuInfo = new SkuInfo();
+
+        return skuInfo;
     }
 
     @Override

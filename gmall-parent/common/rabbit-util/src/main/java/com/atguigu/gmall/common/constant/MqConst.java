@@ -26,4 +26,13 @@ public class MqConst {
     //取消订单 延迟时间 单位：毫秒   现在是1分钟
     public static final int DELAY_TIME  = 1*60*1000;
 
+
+    /**
+     * 订单支付状态更新
+     */
+    public static final String EXCHANGE_DIRECT_PAYMENT_PAY = "exchange.direct.payment.pay";
+    public static final String ROUTING_PAYMENT_PAY = "payment.pay";
+    //队列
+    public static final String QUEUE_PAYMENT_PAY  = "queue.payment.pay";
+
 }
