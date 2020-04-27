@@ -605,6 +605,7 @@
 					secondes = 0;
 				}
 
+				//间隔执行器  1000毫秒
 				const timer = setInterval(() => {
 					secondes = secondes - 1
 					this.timeString = this.convertTimeString(secondes)
@@ -616,10 +617,13 @@
             },
 
             queue() {
-                debugger
                 seckill.getSeckillSkuIdStr(this.skuId).then(response => {
-                    var skuIdStr = response.data.data
-                    window.location.href = '/seckill/queue.html?skuId='+this.skuId+'&skuIdStr='+skuIdStr
+                	if(response.data.code == 200){
+					    var skuIdStr = response.data.data
+					    window.location.href = '/seckill/queue.html?skuId='+this.skuId+'&skuIdStr='+skuIdStr
+                    }else{
+                        alert(response.data.message);
+                    }
                 })
             },
 

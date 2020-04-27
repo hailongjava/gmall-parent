@@ -3,7 +3,9 @@ package com.atguigu.gmall.common.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-
+/**
+ * 自定义的处理过的MD5
+ */
 public final class MD5 {
 
     public static String encrypt(String strSrc) {

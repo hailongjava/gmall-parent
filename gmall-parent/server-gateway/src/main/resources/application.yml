@@ -32,6 +32,10 @@ spring:
           uri: lb://service-payment
           predicates:
             - Path=/*/payment/** # 路径匹配
+        - id: service-activity
+          uri: lb://service-activity
+          predicates:
+            - Path=/*/activity/** # 路径匹配
 #########################上面的配置配合后台微服务###############################################################
 #########################下面的配置配合前台微服务###############################################################
         - id: web-item
@@ -62,6 +66,10 @@ spring:
           uri: lb://web-all  #前台页面微服务 名称
           predicates:
             - Host=payment.gmall.com
+        - id: web-activity
+          uri: lb://web-all
+          predicates:
+            - Host=activity.gmall.com
   redis:
     host: 192.168.200.128
 authUrls: trade.html,pay.html,myOrder.html

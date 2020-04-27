@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.request.AlipayTradeCloseRequest;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.alipay.api.request.AlipayTradeRefundRequest;
+import com.alipay.api.response.AlipayTradeCloseResponse;
 import com.alipay.api.response.AlipayTradePagePayResponse;
 import com.alipay.api.response.AlipayTradeRefundResponse;
 import com.atguigu.gmall.model.enums.PaymentType;
@@ -13,6 +15,7 @@ import com.atguigu.gmall.model.payment.PaymentInfo;
 import com.atguigu.gmall.payment.config.AlipayConfig;
 import com.atguigu.gmall.payment.service.AlipayService;
 import com.atguigu.gmall.payment.service.PaymentService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,7 @@ import java.util.logging.Handler;
  * 支付宝管理
  */
 @Service
+@Slf4j
 public class AlipayServiceImpl implements AlipayService {
 
 
@@ -89,5 +93,20 @@ public class AlipayServiceImpl implements AlipayService {
             System.out.println("调用失败");
         }
 
+    }
+
+    //关闭支付宝
+    @Override
+    public void closePayment(String outTradeNo) throws Exception {
+        AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
+        Map map  = new HashMap();
+        map.put("out_trade_no",outTradeNo);
+        request.setBizContent(JSON.toJSONString(map));
+        AlipayTradeCloseResponse response = alipayClient.execute(request);
+        if(response.isSuccess()){
+            System.out.println("调用成功");
+        } else {
+            System.out.println("调用失败");
+        }
     }
 }

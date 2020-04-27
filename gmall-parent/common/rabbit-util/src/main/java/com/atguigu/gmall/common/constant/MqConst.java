@@ -23,6 +23,8 @@ public class MqConst {
     public static final String ROUTING_ORDER_CANCEL = "routing.order.cancel";
     //延迟取消订单队列
     public static final String QUEUE_ORDER_CANCEL  = "queue.order.cancel";
+    //关闭支付信息队列
+    public static final String QUEUE_PAYMENT_CLOSE  = "queue.payment.close";
     //取消订单 延迟时间 单位：毫秒   现在是1分钟
     public static final int DELAY_TIME  = 1*60*1000;
 
@@ -34,5 +36,14 @@ public class MqConst {
     public static final String ROUTING_PAYMENT_PAY = "payment.pay";
     //队列
     public static final String QUEUE_PAYMENT_PAY  = "queue.payment.pay";
+
+
+    /**
+     * 定时任务
+     */
+    public static final String EXCHANGE_DIRECT_TASK = "exchange.direct.task";
+    public static final String ROUTING_TASK_1 = "seckill.task.1";
+    //队列
+    public static final String QUEUE_TASK_1  = "queue.task.1";
 
 }

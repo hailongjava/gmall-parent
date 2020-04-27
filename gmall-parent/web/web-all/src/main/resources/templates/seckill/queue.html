@@ -204,9 +204,8 @@
         },
 
         methods: {
-            saveOrder() {
+            saveOrder() { //开始抢购秒杀商品   再判断下单码
                 seckill.seckillOrder(this.skuId, this.skuIdStr).then(response => {
-                    debugger
                     console.log(JSON.stringify(response))
                     if(response.data.code == 200) {
                         this.isCheckOrder = true

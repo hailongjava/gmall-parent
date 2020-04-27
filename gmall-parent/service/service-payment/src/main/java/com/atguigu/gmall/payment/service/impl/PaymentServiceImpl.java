@@ -8,6 +8,7 @@ import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.model.payment.PaymentInfo;
 import com.atguigu.gmall.payment.mapper.OrderInfoMapper;
 import com.atguigu.gmall.payment.mapper.PaymentInfoMapper;
+import com.atguigu.gmall.payment.service.AlipayService;
 import com.atguigu.gmall.payment.service.PaymentService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,5 +83,26 @@ public class PaymentServiceImpl implements PaymentService {
             rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_PAYMENT_PAY,
                     MqConst.ROUTING_PAYMENT_PAY,paymentInfo.getOrderId());
         }
+    }
+
+
+    @Autowired
+    private AlipayService alipayService;
+    //关闭交易
+    @Override
+    public void closePayment(Long orderId) throws Exception {
+        //0:检查支付状态
+        PaymentInfo paymentInfo = paymentInfoMapper.selectOne(new QueryWrapper<PaymentInfo>().eq("order_id", orderId));
+        if(PaymentStatus.UNPAID.name().equals(paymentInfo.getPaymentStatus())){
+        //1:关闭支付信息表
+            paymentInfo.setPaymentStatus(PaymentStatus.ClOSED.name());
+            paymentInfoMapper.updateById(paymentInfo);
+        //2:关闭支付宝 （ 报错： 无此交易   用户根本就没有扫描二维码    2小时之后二维码已经失败
+            alipayService.closePayment(paymentInfo.getOutTradeNo());
+        }
+
+
+
+
     }
 }

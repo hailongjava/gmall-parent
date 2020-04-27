@@ -10,10 +10,11 @@ import java.util.Map;
 
 /**
  * 延迟消息配置
- * 1、取消订单
- * 2、
+ * 1、取消订单 （订单微服务）
+ * 2、关闭支付信息表  支付宝关闭交易 （同一个支付微服务）
+ *
  */
-//@Configuration
+@Configuration
 public class OrderMQConfig {
 
 
@@ -27,6 +28,7 @@ public class OrderMQConfig {
                 true,false,arguments);
     }
 
+    //取消订单 队列
     @Bean
     public Queue orderCancelQueue(){
         return QueueBuilder.durable(MqConst.QUEUE_ORDER_CANCEL).build();
@@ -37,5 +39,16 @@ public class OrderMQConfig {
         return BindingBuilder.bind(orderCancelQueue())
                 .to(orderCancelExchange()).with(MqConst.ROUTING_ORDER_CANCEL).noargs();
     }
+    //关闭交易队列 （关闭支付信息表 、支付宝交易）
+    @Bean
+    public Queue closePaymentQueue(){
+        return QueueBuilder.durable(MqConst.QUEUE_PAYMENT_CLOSE).build();
+    }
+    @Bean
+    public Binding closePaymentBinding(){
+        return BindingBuilder.bind(closePaymentQueue())
+                .to(orderCancelExchange()).with(MqConst.ROUTING_ORDER_CANCEL).noargs();
+    }
+
 
 }
