@@ -28,8 +28,8 @@ public class RedisConst {
 
     //秒杀商品前缀
     public static final String SECKILL_GOODS = "seckill:goods";
-    public static final String SECKILL_ORDERS = "seckill:orders";
-    public static final String SECKILL_ORDERS_USERS = "seckill:orders:users";
+    public static final String SECKILL_ORDERS = "seckill:orders:";
+    public static final String SECKILL_ORDERS_USERS = "seckill:orders:users:";
     public static final String SECKILL_STOCK_PREFIX = "seckill:stock:";
     public static final String SECKILL_USER = "seckill:user:";
     //用户锁定时间 单位：秒
