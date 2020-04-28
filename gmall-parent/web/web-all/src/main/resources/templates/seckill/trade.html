@@ -316,7 +316,7 @@
 
         methods: {
             init() {
-                debugger
+
                 this.userAddressList.forEach((item) => {
                     item.selected = 0
                     if(item.isDefault == 1) {
@@ -330,9 +330,10 @@
 
             submitOrder() {
                 seckill.submitOrder(this.order).then(response => {
-                    debugger
                     if (response.data.code == 200) {
-						window.location.href = 'http://payment.gmall.com/pay.html?orderId=' + response.data.data
+					    alert(response.data.message);
+                    	return;
+						//window.location.href = 'http://payment.gmall.com/pay.html?orderId=' + response.data.data
 					} else {
                         alert(response.data.message)
                     }
@@ -341,7 +342,6 @@
             },
 
             selectAddress(addressId) {
-                debugger
                 this.userAddressList.forEach((item) => {
                     if(item.id == addressId) {
                         item.selected = 1

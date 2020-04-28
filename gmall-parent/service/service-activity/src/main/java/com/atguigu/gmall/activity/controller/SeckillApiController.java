@@ -10,17 +10,20 @@ import com.atguigu.gmall.common.result.ResultCodeEnum;
 import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.common.util.AuthContextHolder;
 import com.atguigu.gmall.common.util.MD5;
+import com.atguigu.gmall.model.activity.OrderRecode;
 import com.atguigu.gmall.model.activity.SeckillGoods;
 import com.atguigu.gmall.model.activity.UserRecode;
+import com.atguigu.gmall.model.order.OrderDetail;
+import com.atguigu.gmall.model.order.OrderInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 秒杀管理
@@ -144,5 +147,55 @@ public class SeckillApiController {
         }
 //        3、没有  返回排队中
         return Result.build(null,ResultCodeEnum.SECKILL_RUN);
+    }
+    //查询秒杀的商品清单(订单详情集合）  总条数 总金额
+    @GetMapping("/auth/trade")
+    public Map trade(HttpServletRequest request){
+        Map result = new HashMap();
+
+        String userId = AuthContextHolder.getUserId(request);
+        //2:商品清单  （订单详情集合）  Redis缓存 秒杀订单资格  有秒杀商品
+        List<OrderDetail> orderDetailList = new ArrayList<>();
+        //长度1
+        OrderDetail oD = new OrderDetail();
+        //秒杀商品的信息保存到订单详情对象中
+        OrderRecode orderRecode = (OrderRecode) redisTemplate.opsForValue().get(RedisConst.SECKILL_ORDERS + userId);
+
+        if(null != orderRecode){
+            SeckillGoods seckillGoods = orderRecode.getSeckillGoods();
+            //库存ID
+            oD.setSkuId(seckillGoods.getSkuId());
+            //图片
+            oD.setImgUrl(seckillGoods.getSkuDefaultImg());
+            //价格
+            oD.setOrderPrice(seckillGoods.getCostPrice());
+            //标题
+            oD.setSkuName(seckillGoods.getSkuName());
+            //数量
+            oD.setSkuNum(orderRecode.getNum());
+        }
+
+        orderDetailList.add(oD);
+
+        result.put("detailArrayList",orderDetailList);
+        //总件数
+        long totalNum = orderDetailList.stream().
+                collect(Collectors.summarizingInt(OrderDetail::getSkuNum)).getSum();
+        //总金额
+        double totalAmount = orderDetailList.stream().
+                collect(Collectors.summarizingDouble(orderDetail -> {
+                    return orderDetail.getOrderPrice().doubleValue()*orderDetail.getSkuNum();
+                })).getSum();
+        result.put("totalNum",totalNum);
+        result.put("totalAmount",totalAmount);
+        return result;
+    }
+    //提交订单
+    @PostMapping("/auth/submitOrder")
+    public Result submitOrder(@RequestBody OrderInfo orderInfo,HttpServletRequest request){
+        String userId = AuthContextHolder.getUserId(request);
+        redisTemplate.opsForValue().set(RedisConst.SECKILL_ORDERS_USERS + userId,orderInfo,
+                30,TimeUnit.MINUTES);
+        return Result.ok();
     }
 }

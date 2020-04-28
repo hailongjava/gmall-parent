@@ -76,8 +76,28 @@ public class RabbitService {
         rabbitTemplate.convertAndSend(exchange,routingKey,msg,correlationData);
         return true;
     }
+    //发消息(普通消息）
+    public boolean sendMessage(String routingKey,Object msg){
 
-    //发送延迟消息的方法
+        //发送失败之后 回调的返回值对象
+        GmallCorrelationData correlationData = new GmallCorrelationData();
+        //ID
+        correlationData.setId(UUID.randomUUID().toString());
+        //路由Key
+        correlationData.setRoutingKey(routingKey);
+        //消息
+        correlationData.setMessage(msg);
+        //不是延迟  是正常消息
+        correlationData.setDelay(false);
+        //防止消息 不能送达到队列  失败答应时  需要从缓存中获取correlationData对象
+        // 将correlationData设置到缓存中
+        redisTemplate.opsForValue().set(correlationData.getId(), JSON.toJSONString(correlationData));
+        //是否设置存活时间  5分钟 之内是可以完成发送三次的 完全够了
+        //发消息
+        rabbitTemplate.convertAndSend(routingKey,msg,correlationData);
+        return true;
+    }
+
 
 
 

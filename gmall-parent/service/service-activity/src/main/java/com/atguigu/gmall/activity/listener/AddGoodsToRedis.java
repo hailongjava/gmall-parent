@@ -33,6 +33,36 @@ public class AddGoodsToRedis {
     private RedisTemplate redisTemplate;
 
 
+    //接收消息  将缓存中今天已经结束了秒杀活动 清理掉
+    @RabbitListener(queuesToDeclare = @Queue(value = MqConst.QUEUE_TASK_20))
+    public void cleanRedisMessage(Message message, Channel channel){
+
+        List<SeckillGoods> seckillGoodsList = redisTemplate.opsForHash().values(RedisConst.SECKILL_GOODS);
+        for (SeckillGoods seckillGoods : seckillGoodsList) {
+            Date endTime = seckillGoods.getEndTime();
+            // 第一个值 大于 第二个值  返回false
+            // 第一个值 小于 第二个值  返回true
+            boolean b = DateUtil.dateCompare(endTime, new Date());//活动已经结束
+            if(b){
+                //删除商品缓存
+                redisTemplate.opsForHash().delete(RedisConst.SECKILL_GOODS,seckillGoods.getSkuId().toString());
+                //删除此商品的库存  List 1,1,1,1
+                redisTemplate.delete(RedisConst.SECKILL_STOCK_PREFIX + seckillGoods.getSkuId());
+                //订单资格   用户不下单时 倒计时 30分钟后自动清理
+                //在30分钟过程中  下单了 删除订单资格
+                //下过订单  用户一定给钱吗？ 给钱了  删除订单 持久到Mysql数据库
+                //  下过订单 也要 设置时间 30分钟 绑定用户ID
+                //更新Mysql 中 秒杀商品的 状态 为2 此活动已经结束
+                SeckillGoods seckillGoods1 = new SeckillGoods();
+                seckillGoods.setId(seckillGoods.getId());
+                seckillGoods.setStatus("2");
+                seckillGoodsMapper.updateById(seckillGoods);
+
+            }
+        }
+
+    }
+
     //接收消息 将Mysql中的当天的商品压入缓存中
     @RabbitListener(bindings = @QueueBinding(
             exchange = @Exchange(value = MqConst.EXCHANGE_DIRECT_TASK),

@@ -29,6 +29,8 @@ public class SeckillReceiver {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+
     //接收消息
     @RabbitListener(bindings = @QueueBinding(
             exchange = @Exchange(value = MqConst.EXCHANGE_DIRECT_SECKILL_USER),
@@ -70,7 +72,8 @@ public class SeckillReceiver {
                 return;
             }
             //4:抢购到商品了
-            SeckillGoods seckillGoods = (SeckillGoods) redisTemplate.opsForHash().get(RedisConst.SECKILL_GOODS, userRecode.getSkuId());
+            SeckillGoods seckillGoods = (SeckillGoods) redisTemplate.opsForHash()
+                    .get(RedisConst.SECKILL_GOODS, userRecode.getSkuId().toString());
             //Key 用户ID
             //Value ： 抢购资格的对象
             OrderRecode orderRecode = new OrderRecode();
@@ -78,7 +81,7 @@ public class SeckillReceiver {
             orderRecode.setNum(1);
             orderRecode.setSeckillGoods(seckillGoods);
             redisTemplate.opsForValue().set(RedisConst.SECKILL_ORDERS + userRecode.getUserId(),
-                    orderRecode);
+                    orderRecode,30,TimeUnit.MINUTES);
             //后续.....
             channel.basicAck(message.getMessageProperties().getDeliveryTag(),true);
         } catch (Exception e) {

@@ -28,6 +28,13 @@ public class Task1 {
                 MqConst.ROUTING_TASK_1,"111");
 
     }
+    //晚20点清理当天的结束的秒杀缓存
+    @Scheduled(cron = "* * 20 * * ?")
+    public void task2(){
+        //发消息  五大数据类型： 简单模式  队列      工作模式  队列  消费者接收（竞争 关系
+        rabbitService.sendMessage(MqConst.QUEUE_TASK_20,"111");
+
+    }
 //    /**
 //     * 每天凌晨1点执行
 //     */
