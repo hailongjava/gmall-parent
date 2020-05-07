@@ -22,6 +22,6 @@ public interface ListFeignClient {
 
     //开始搜索
     //入参：SearchParam
-    @PostMapping("/api/list")
+    @PostMapping("/api/list/list")
     public SearchResponseVo list(@RequestBody SearchParam searchParam);
 }

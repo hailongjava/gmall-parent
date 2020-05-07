@@ -10,6 +10,19 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * {
+ *      "orderBody":"华为 HUAWEI Mate 30 5G 麒麟990 4000万超感光徕卡影像双超级快充8GB+128GB亮黑色5G全网通游戏手机 Redmi K30 5G双模 120Hz流速屏 骁龙765G 30W快充 6GB+128GB 深海微光 游戏智能手机 小米 红米 ",
+ *      "consignee":"admin",
+ *      "orderComment":"",
+ *      "orderId":1,"
+ *      consigneeTel":"17800000",
+ *      "deliveryAddress":"北京市昌平区2",
+ *      "details":[{
+ *              "skuName":"华为 HUAWEI Mate 30 5G 麒麟990 4000万超感光徕卡影像双超级快充8GB+128GB亮黑色5G全网通游戏手机",
+ *              "skuId":10,
+ *              "skuNum":2
+ *              },{
+ *              "skuName":"Redmi K30 5G双模 120Hz流速屏 骁龙765G 30W快充 6GB+128GB 深海微光 游戏智能手机 小米 红米","skuId":14,"skuNum":5}],"paymentWay":"2"}
  * @param
  * @return
  */

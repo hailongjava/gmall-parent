@@ -1,6 +1,7 @@
 package com.atguigu.gmall.list.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.list.dao.GoodsDao;
 import com.atguigu.gmall.list.service.ListService;
 import com.atguigu.gmall.model.list.*;
@@ -66,12 +67,13 @@ public class ListServiceImpl implements ListService {
         //4:价格
         goods.setPrice(skuInfo.getPrice().doubleValue());
         //5:当前时间
-        //goods.setCreateTime(new Date());
+        goods.setCreateTime(new Date());
         //6:品牌ID
         goods.setTmId(skuInfo.getTmId());
         //7:品牌名称
         BaseTrademark trademarkByTmId = productFeignClient.getTrademarkByTmId(skuInfo.getTmId());
         goods.setTmName(trademarkByTmId.getTmName());
+        goods.setTmLogoUrl(trademarkByTmId.getLogoUrl());
         //8:一二三级分类ID 、名称
         BaseCategoryView baseCategoryView = productFeignClient.getBaseCategoryView(skuInfo.getCategory3Id());
         goods.setCategory1Id(baseCategoryView.getCategory1Id());
@@ -173,7 +175,7 @@ public class ListServiceImpl implements ListService {
         if (null != hits1 && hits1.length > 0) {
             List<Goods> goodsList = Arrays.stream(hits1).map(searchHit -> {
                 //商品数据  // 商品数据 Json格式字符串
-                Goods goods = JSON.parseObject(searchHit.getSourceAsString(), Goods.class);
+                Goods goods = JSONObject.parseObject(searchHit.getSourceAsString(), Goods.class);
                 //判断是否有高亮  title
                 Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
                 if(null != highlightFields && highlightFields.size() > 0){
@@ -195,6 +197,9 @@ public class ListServiceImpl implements ListService {
             //在tmIdAgg 分组中 遍历每个分组里面有二级分组
             ParsedStringTerms tmNameAgg = ((Terms.Bucket) bucket).getAggregations().get("tmNameAgg");
             tmVo.setTmName(tmNameAgg.getBuckets().get(0).getKeyAsString());
+
+            ParsedStringTerms tmLogoUrlAgg = ((Terms.Bucket) bucket).getAggregations().get("tmLogoUrlAgg");
+            tmVo.setTmLogoUrl(tmLogoUrlAgg.getBuckets().get(0).getKeyAsString());
             return tmVo;
         }).collect(Collectors.toList());
         vo.setTrademarkList(tmVoList);
@@ -323,7 +328,8 @@ public class ListServiceImpl implements ListService {
         //6:分组查询  List<对象> tmIds  对象 （tmId  tmName List<平台属性值》)
         //品牌分组查询    需要起别名： 目地是为了将查询进通过别名获取出来
         searchSourceBuilder.aggregation(AggregationBuilders.terms("tmIdAgg").field("tmId")
-                              .subAggregation(AggregationBuilders.terms("tmNameAgg").field("tmName")));
+                              .subAggregation(AggregationBuilders.terms("tmNameAgg").field("tmName"))
+                              .subAggregation(AggregationBuilders.terms("tmLogoUrlAgg").field("tmLogoUrl")));
         //平台属性分组查询  nested：嵌套分组  attrs:[ attrId:1
         searchSourceBuilder.aggregation(
                 AggregationBuilders.nested("attrsAgg","attrs")

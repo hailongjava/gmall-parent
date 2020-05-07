@@ -25,7 +25,7 @@ public class ListApiController {
 
     //开始搜索
     //入参：SearchParam
-    @PostMapping
+    @PostMapping("/list")
     public SearchResponseVo list(@RequestBody SearchParam searchParam){
         return listService.list(searchParam);
     }

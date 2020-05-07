@@ -64,4 +64,4 @@ spring:
 #        include: "*"
 order:
   split:
-    url: http://localhost:8081/api/order/orderSplit
+    url: http://localhost:8204/api/order/orderSplit

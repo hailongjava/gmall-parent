@@ -1,19 +1,23 @@
 package com.atguigu.gmall.order.controller;
 
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.common.util.AuthContextHolder;
 import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.order.service.OrderService;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 订单管理
@@ -27,6 +31,29 @@ public class OrderApiController {
     private OrderService orderService;
     @Autowired
     private RedisTemplate redisTemplate;
+
+    //拆单
+    @PostMapping("/orderSplit")
+    public String orderSplit(Long orderId,String wareSkuMap){
+        List<OrderInfo> orderInfoList = orderService.orderSplit(orderId, wareSkuMap);
+
+        List<Map> mapArrayList  = new ArrayList<>();
+        for (OrderInfo orderInfo : orderInfoList) {
+            Map<String, Object> map = orderService.initWareOrder(orderInfo);
+            mapArrayList.add(map);
+        }
+        return JSON.toJSONString(mapArrayList);
+    }
+
+    //
+    //发消息 通知仓库
+    @ApiOperation("发消息通知仓库入参为OrderID")
+    @GetMapping("/sendOrderStatus")
+    public Result sendOrderStatus(Long orderId){
+        orderService.sendOrderStatus(orderId);
+        return Result.ok("发消息通知仓库");
+    }
+
 
     //根据订单ID查询订单信息
     @GetMapping("/getOrderInfo/{orderId}")

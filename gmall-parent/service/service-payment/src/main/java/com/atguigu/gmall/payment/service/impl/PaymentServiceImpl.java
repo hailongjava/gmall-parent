@@ -64,10 +64,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private RabbitService rabbitService;
-    //支付成功时 更新支付信息表  班长 幂等性问题   重复性问题
+    //支付成功时 更新支付信息表
     @Override
     public void paySuccess(Map<String, String> paramMap, String name) {
-        //可能出现重复性问题   更新支付信息表为多次  钱有关系的时候
         //1:检查支付信息表  是否已经更新完成
         PaymentInfo paymentInfo = paymentInfoMapper.selectOne(new
                 QueryWrapper<PaymentInfo>().eq("out_trade_no", paramMap.get("out_trade_no")));

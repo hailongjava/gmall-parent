@@ -202,7 +202,7 @@ public class GwareServiceImpl implements GwareService {
             Map<String, String> map = new HashMap<>();
             map.put("orderId", wareOrderTask.getOrderId());
             map.put("wareSkuMap", jsonString);
-            // http://order.gmall.com/orderSplit?orderId=xxx&wareSkuMap=xxx
+            // http://order.gmall.com/api/order/orderSplit?orderId=xxx&wareSkuMap=xxx
             String resultJson = HttpclientUtil.doPost(ORDER_URL, map);
             List<WareOrderTask> wareOrderTaskList = JSON.parseArray(resultJson, WareOrderTask.class);
             if (wareOrderTaskList.size() >= 2) {
